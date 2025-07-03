@@ -308,10 +308,10 @@ onMounted(() => {
     });
 
     // Publish join again (optional but safe)
-    client.value.publish({
-      destination: '/app/join',
-      body: JSON.stringify({ username, roomId })
-    });
+    // client.value.publish({
+    //   destination: '/app/join',
+    //   body: JSON.stringify({ username, roomId })
+    // });
   });
 });
 

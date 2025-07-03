@@ -152,7 +152,6 @@ const connectionStatus = computed(() => {
 // Drawing functions
 const draw = (x, y, color = '#000000', width = 3, erase = false) => {
     // Ensure coordinates are within canvas bounds
-    const canvasRect = canvas.value.getBoundingClientRect();
     const clampedX = Math.max(0, Math.min(x, canvas.value.width));
     const clampedY = Math.max(0, Math.min(y, canvas.value.height));
     
@@ -167,8 +166,7 @@ const draw = (x, y, color = '#000000', width = 3, erase = false) => {
         ctx.strokeStyle = color;
     }
     
-    ctx.beginPath();
-    ctx.moveTo(lastX.value, lastY.value);
+    // Don't use beginPath here - we want continuous strokes during drawing
     ctx.lineTo(clampedX, clampedY);
     ctx.stroke();
     
@@ -235,6 +233,9 @@ const handleMouseDown = (e) => {
     const pos = getMousePos(e);
     lastX.value = pos.x;
     lastY.value = pos.y;
+    
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
 
     if (props.client && props.client.connected) {
         props.client.publish({
@@ -253,6 +254,7 @@ const handleMouseUp = () => {
     if (!isDrawing) return;
     isDrawing = false;
     
+    // ctx.beginPath();
     // Emit stroke end event
     if (props.client && props.client.connected) {
         props.client.publish({
@@ -299,6 +301,9 @@ const handleTouchStart = (e) => {
     lastY.value = touch.y;
     isDrawing = true;
 
+    ctx.beginPath();
+    ctx.moveTo(touch.x, touch.y);
+
     // Emit stroke start event
     if (props.client && props.client.connected) {
         props.client.publish({
@@ -318,6 +323,9 @@ const handleTouchEnd = (e) => {
     
     e.preventDefault();
     isDrawing = false;
+
+    // ctx.beginPath();
+
     // Emit stroke end event
     if (props.client && props.client.connected) {
         props.client.publish({
@@ -382,8 +390,6 @@ const handleRemoteDraw = (data) => {
         ctx.strokeStyle = msg.color;
     }
     
-    ctx.beginPath();
-    ctx.moveTo(lastPos.x, lastPos.y);
     ctx.lineTo(msg.x, msg.y);
     ctx.stroke();
     
@@ -392,10 +398,10 @@ const handleRemoteDraw = (data) => {
 };
 
 const handleRemoteClear = (data) => {
-    const msg = JSON.parse(data.body);
+    // const msg = JSON.parse(data.body);
     //
     // Don't clear for our own clear action
-    if (msg.username === props.username) return;
+    // if (msg.username === props.username) return;
     
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
     remoteLastPositions.value = {};
@@ -410,12 +416,17 @@ const handleRemoteDrawStart = (data) => {
     // Mark this user as actively drawing and set their starting position
     remoteDrawingStates.value[msg.username] = true;
     remoteLastPositions.value[msg.username] = { x: msg.x, y: msg.y };
+     // Start a new path for remote drawing
+    ctx.beginPath();
+    ctx.moveTo(msg.x, msg.y);
 };
 
 const handleRemoteDrawEnd = (data) => {
     const msg = JSON.parse(data.body);
     if (msg.username !== props.username) {
         remoteDrawingStates.value[msg.username] = false;
+
+        // ctx.beginPath();
     }
 };
 // Resize handler

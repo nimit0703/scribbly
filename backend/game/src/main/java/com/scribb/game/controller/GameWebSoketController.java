@@ -52,6 +52,24 @@ public class GameWebSoketController {
         messagingTemplate.convertAndSend("/topic/draw/" + message.getRoomId(), message);
     }
 
+    @MessageMapping("/draw-start")
+    public void drawStart(@Payload DrawStartMessage message) {
+        // Simply broadcast the draw start event to all clients in the room
+        messagingTemplate.convertAndSend("/topic/draw-start/" + message.getRoomId(), message);
+    }
+
+    @MessageMapping("/draw-end")
+    public void drawEnd(@Payload DrawEndMessage message) {
+        // Simply broadcast the draw end event to all clients in the room
+        messagingTemplate.convertAndSend("/topic/draw-end/" + message.getRoomId(), message);
+    }
+
+    @MessageMapping("/clear")
+    public void clearCanvas(@Payload ClearMessage message) {
+        // Broadcast the clear event to all clients in the room
+        messagingTemplate.convertAndSend("/topic/clear/" + message.getRoomId(), message);
+    }
+
     @MessageMapping("/chat")
     public void receiveChat(@Payload ChatMessage message) {
         boolean correct = roomManager.processGuess(message.getRoomId(), message.getUsername(), message.getContent());

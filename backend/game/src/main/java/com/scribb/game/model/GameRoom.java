@@ -16,7 +16,7 @@ public class GameRoom {
     private String currentDrawer;
     private boolean gameStarted = false;
     private int roundNumber = 1;
-    private final int totalRounds = 3;
+    private final int totalRounds = 10;
     private long roundStartTime;
     private Set<String> correctGuessers = new HashSet<>();
     private int lastDrawerIndex = -1;
