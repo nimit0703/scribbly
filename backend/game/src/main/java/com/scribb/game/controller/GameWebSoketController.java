@@ -3,6 +3,7 @@ package com.scribb.game.controller;
 import com.scribb.game.model.*;
 import com.scribb.game.service.GameRoundService;
 import com.scribb.game.service.RoomManager;
+import com.scribb.game.service.TimerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -16,11 +17,13 @@ public class GameWebSoketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final RoomManager roomManager;
     private final GameRoundService gameRoundService;
+    private final TimerService timerService;
 
-    public GameWebSoketController(SimpMessagingTemplate messagingTemplate, RoomManager roomManager, GameRoundService gameRoundService) {
+    public GameWebSoketController(SimpMessagingTemplate messagingTemplate, RoomManager roomManager, GameRoundService gameRoundService, TimerService timerService) {
         this.messagingTemplate = messagingTemplate;
         this.roomManager = roomManager;
         this.gameRoundService = gameRoundService;
+        this.timerService = timerService;
     }
 
     @MessageMapping("/join")
@@ -96,6 +99,9 @@ public class GameWebSoketController {
     }
 
     private void endRoundInternal(String roomId) {
+
+        timerService.stopTimer(roomId);
+
         roomManager.endRound(roomId);
 
         GameRoom room = roomManager.getRoom(roomId);
@@ -159,5 +165,11 @@ public class GameWebSoketController {
     @MessageMapping("/end-round")
     public void endRound(@Payload RoundEndRequest req) {
         gameRoundService.endRound(req.getRoomId());
+    }
+
+    @MessageMapping("/timer-ended")
+    public void handleTimerEnded(@Payload TimerEndedMessage message) {
+        // Timer ended, end the round
+        gameRoundService.endRound(message.getRoomId());
     }
 }

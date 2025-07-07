@@ -25,6 +25,10 @@ public class GameRoom {
     }
     private final long roundDurationMillis = 60_000; // 60 seconds
 
+    // New timer-related fields
+    private boolean timerActive = false;
+    private long timerStartTime = 0;
+
     public void setCurrentWord(String currentWord) {
         this.currentWord = currentWord;
     }
@@ -43,6 +47,7 @@ public class GameRoom {
     public void setLastDrawerIndex(int index) {
         this.lastDrawerIndex = index;
     }
+
     public void resetForNextRound() {
         currentWord = null;
         currentDrawer = null;
@@ -51,9 +56,35 @@ public class GameRoom {
             p.setHasGuessedCorrectly(false);
         }
         roundNumber++;
+
+        timerActive = false;
+        timerStartTime = 0;
+        System.out.println("timer stopped/reset");
     }
 
     public boolean isGameOver() {
         return roundNumber > totalRounds;
+    }
+
+    // Timer methods
+    public void startTimer() {
+        System.out.println("timer start");
+        this.timerActive = true;
+        this.timerStartTime = System.currentTimeMillis();
+    }
+
+    public void stopTimer() {
+        System.out.println("timer stop");
+        this.timerActive = false;
+    }
+
+    public long getRemainingTime() {
+        if (!this.timerActive) return 0;
+        long elapsed = System.currentTimeMillis() - timerStartTime;
+        return Math.max(0, roundDurationMillis - elapsed);
+    }
+
+    public int getRemainingTimeSeconds() {
+        return (int) (getRemainingTime() / 1000);
     }
 }

@@ -13,11 +13,14 @@ public class GameRoundService {
 
     private final RoomManager roomManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final TimerService timerService;
+
 
     public void endRound(String roomId) {
         GameRoom room = roomManager.getRoom(roomId);
         if (room == null) return;
 
+        timerService.resetTimer(roomId);
         roomManager.endRound(roomId);
 
         messagingTemplate.convertAndSend("/topic/players/" + roomId, room.getPlayers());

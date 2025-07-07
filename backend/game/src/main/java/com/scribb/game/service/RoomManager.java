@@ -21,9 +21,11 @@ public class RoomManager {
     private final List<String> wordBank = List.of("apple", "carrot", "house", "banana", "computer", "pizza");
 
     private final GameRoundService gameRoundService;
+    private final TimerService timerService;
 
-    public RoomManager(@Lazy GameRoundService gameRoundService) {
+    public RoomManager(@Lazy GameRoundService gameRoundService, @Lazy TimerService timerService) {
         this.gameRoundService = gameRoundService;
+        this.timerService = timerService;
     }
 
     public GameRoom createOrJoinRoom(String roomId, String username) {
@@ -50,6 +52,8 @@ public class RoomManager {
                 room.setCurrentDrawer(drawer);
                 room.setRoundStartTime(System.currentTimeMillis());
                 System.out.println( "word is set for room" + room.getRoomId() + " :" +room.getCurrentWord());
+                timerService.startTimer(roomId);
+                System.out.println( "Timer started for roomID" + roomId +" time left : "+ room.getRemainingTimeSeconds());
             }
         }
     }

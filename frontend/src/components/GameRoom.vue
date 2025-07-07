@@ -15,6 +15,10 @@
               <p class="text-sm text-gray-600">Room: <span class="font-semibold text-purple-600">{{ roomId }}</span></p>
             </div>
           </div>
+
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <h1 class="text-xl sm:text-2xl  text-gray-800" :class="true? 'text-red-700': 'text-gray-800'">{{timer}}sec</h1>
+          </div>
           <div class="flex items-center gap-2 text-sm text-gray-600">
             <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span>{{ players.length }} players online</span>
@@ -240,7 +244,7 @@ const hint = ref('');
 const isDrawer = ref(false);
 const wordOptions = ref([]);
 const selectedWord = ref('');
-
+const timer = ref(0);
 // Player color themes
 const playerColors = [
   'from-red-400 to-pink-400',
@@ -307,6 +311,17 @@ onMounted(() => {
       wordOptions.value = JSON.parse(msg.body);
     });
 
+    client.value.subscribe(`/topic/timer/${roomId}`,(msg)=>{
+      const remainingTime = JSON.parse(msg.body);
+      timer.value = remainingTime;
+      
+    })
+    client.value.subscribe('/topic/timer-ended/' + roomId, function(message) {
+      // Handle timer expiration
+      console.log("Game over");
+      
+      // showTimeUpMessage();
+  });
     // Publish join again (optional but safe)
     // client.value.publish({
     //   destination: '/app/join',
