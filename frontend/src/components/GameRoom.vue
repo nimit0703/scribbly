@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-2 sm:p-4">
+  <div class="min-h-screen bg-gradient-to-br from-purple-200 to-blue-50 p-2 sm:p-4">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="bg-white rounded-xl shadow-lg p-4 mb-4">
@@ -11,7 +11,7 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Skribbl Room</h1>
+              <h1 class="text-xl sm:text-2xl font-bold text-gray-800">{{ username }}</h1>
               <p class="text-sm text-gray-600">Room: <span class="font-semibold text-purple-600">{{ roomId }}</span></p>
             </div>
           </div>
@@ -32,7 +32,7 @@
         <div class="lg:col-span-3 order-2 lg:order-1">
           <div class="bg-white rounded-xl shadow-lg overflow-hidden">
             <!-- Canvas Header -->
-            <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-4">
               <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div class="text-white">
                   <h2 class="text-lg font-semibold">Drawing Canvas</h2>

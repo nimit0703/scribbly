@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RoomManager {
     @PostConstruct
     public void init() {
-        System.out.println("✅ RoomManager initialized");
+        System.out.println("_____________________ RoomManager initialized ______________________________________________");
     }
     private final Map<String, GameRoom> rooms = new ConcurrentHashMap<>();
     private final List<String> wordBank = List.of("apple", "carrot", "house", "banana", "computer", "pizza");

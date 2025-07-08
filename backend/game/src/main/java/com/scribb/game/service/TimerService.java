@@ -60,7 +60,6 @@ public class TimerService {
     }
     public void resetTimer(String roomId) {
         stopTimer(roomId);
-        // Timer will be started again when needed
     }
 
 }

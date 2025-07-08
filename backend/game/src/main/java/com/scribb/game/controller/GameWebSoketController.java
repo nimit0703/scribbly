@@ -33,7 +33,7 @@ public class GameWebSoketController {
         // Notify all clients about players
         messagingTemplate.convertAndSend("/topic/players/" + request.getRoomId(), room.getPlayers());
 
-        // ✅ Auto-start when minimum 2 players are in room (or use 1 for testing)
+        // Auto-start when minimum 2 players are in room (or use 1 for testing)
         if (room.getPlayers().size() == 2 && !room.isGameStarted()) {
             room.setGameStarted(true); // flag to prevent retrigger
 
@@ -98,36 +98,7 @@ public class GameWebSoketController {
         }
     }
 
-    private void endRoundInternal(String roomId) {
-
-        timerService.stopTimer(roomId);
-
-        roomManager.endRound(roomId);
-
-        GameRoom room = roomManager.getRoom(roomId);
-
-        // 📢 Notify clients about updated players and new round
-        messagingTemplate.convertAndSend("/topic/players/" + roomId, room.getPlayers());
-        messagingTemplate.convertAndSend("/topic/round/" + roomId, room.getRoundNumber());
-
-        // 🧼 Clear canvas + hint (frontend can reset when round changes)
-        messagingTemplate.convertAndSend("/topic/hint/" + roomId, "");
-
-        // ✅ Auto-start next round if not game over
-        if (!room.isGameOver()) {
-            String nextDrawer = roomManager.pickNextDrawer(room);
-            room.setCurrentDrawer(nextDrawer);
-            room.setRoundStartTime(System.currentTimeMillis());
-
-            List<String> words = roomManager.getRandomWords();
-            messagingTemplate.convertAndSend("/topic/word-options/" + nextDrawer, words);
-            messagingTemplate.convertAndSend("/topic/drawer/" + roomId, nextDrawer);
-        } else {
-            messagingTemplate.convertAndSend("/topic/system/" + roomId, "🎉 Game Over!");
-        }
-    }
-
-    // 🧠 4. Drawer selects a word
+    // Drawer selects a word
     @MessageMapping("/word-select")
     public void wordSelect(@Payload WordSelection selection) {
         roomManager.setWord(selection.getRoomId(), selection.getDrawer(), selection.getWord());
@@ -137,12 +108,6 @@ public class GameWebSoketController {
         messagingTemplate.convertAndSend("/topic/hint/" + selection.getRoomId(), masked);
     }
 
-    // 🕹️ 5. Start round (send word choices to drawer only)
-//    @MessageMapping("/start-round")
-//    public void startRound(@Payload StartRoundRequest req) {
-//        List<String> words = roomManager.getRandomWords();
-//        messagingTemplate.convertAndSend("/topic/word-options/" + req.getDrawer(), words);
-//    }
     @MessageMapping("/start-round")
     public void startRound(@Payload StartRoundRequest req) {
         GameRoom room = roomManager.getRoom(req.getRoomId());
@@ -161,7 +126,7 @@ public class GameWebSoketController {
         messagingTemplate.convertAndSend("/topic/drawer/" + req.getRoomId(), nextDrawer);
     }
 
-    // ⏹️ 6. End current round
+    // End current round
     @MessageMapping("/end-round")
     public void endRound(@Payload RoundEndRequest req) {
         gameRoundService.endRound(req.getRoomId());
@@ -172,4 +137,34 @@ public class GameWebSoketController {
         // Timer ended, end the round
         gameRoundService.endRound(message.getRoomId());
     }
+
+    private void endRoundInternal(String roomId) {
+
+        timerService.stopTimer(roomId);
+
+        roomManager.endRound(roomId);
+
+        GameRoom room = roomManager.getRoom(roomId);
+
+        //  Notify clients about updated players and new round
+        messagingTemplate.convertAndSend("/topic/players/" + roomId, room.getPlayers());
+        messagingTemplate.convertAndSend("/topic/round/" + roomId, room.getRoundNumber());
+
+        //  Clear canvas + hint (frontend can reset when round changes)
+        messagingTemplate.convertAndSend("/topic/hint/" + roomId, "");
+
+        //  Auto-start next round if not game over
+        if (!room.isGameOver()) {
+            String nextDrawer = roomManager.pickNextDrawer(room);
+            room.setCurrentDrawer(nextDrawer);
+            room.setRoundStartTime(System.currentTimeMillis());
+
+            List<String> words = roomManager.getRandomWords();
+            messagingTemplate.convertAndSend("/topic/word-options/" + nextDrawer, words);
+            messagingTemplate.convertAndSend("/topic/drawer/" + roomId, nextDrawer);
+        } else {
+            messagingTemplate.convertAndSend("/topic/system/" + roomId, "🎉 Game Over!");
+        }
+    }
+
 }
