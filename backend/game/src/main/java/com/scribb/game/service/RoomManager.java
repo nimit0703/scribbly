@@ -60,11 +60,11 @@ public class RoomManager {
 
     public boolean processGuess(String roomId, String username, String guess) {
         GameRoom room = rooms.get(roomId);
-        System.out.println(room.getCurrentWord());
-        System.out.println(username.equals(room.getCurrentDrawer()));
         if (room == null || room.getCurrentWord() == null || username.equals(room.getCurrentDrawer())) {
             return false;
         }
+        System.out.println(room.getCurrentWord());
+        System.out.println(username.equals(room.getCurrentDrawer()));
 
         if (guess.trim().equalsIgnoreCase(room.getCurrentWord())) {
             if (!room.getCorrectGuessers().contains(username)) {
