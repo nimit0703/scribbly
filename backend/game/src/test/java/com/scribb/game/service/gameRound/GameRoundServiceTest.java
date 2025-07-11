@@ -5,6 +5,7 @@ import com.scribb.game.model.Player;
 import com.scribb.game.service.GameRoundService;
 import com.scribb.game.service.RoomManager;
 import com.scribb.game.service.TimerService;
+import com.scribb.game.service.WordBankService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -22,7 +23,7 @@ public class GameRoundServiceTest {
     @Mock private RoomManager roomManager;
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private TimerService timerService;
-
+    @Mock private WordBankService wordBankService;
     @InjectMocks private GameRoundService gameRoundService;
 
     @BeforeEach

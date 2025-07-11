@@ -10,4 +10,5 @@ public class DrawMessage {
     private String color;
     private int width;
     private boolean isDragging;
+    private String  username;
 }

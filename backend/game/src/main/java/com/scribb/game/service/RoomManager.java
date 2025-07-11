@@ -22,10 +22,12 @@ public class RoomManager {
 
     private final GameRoundService gameRoundService;
     private final TimerService timerService;
+    private final WordBankService wordBankService;
 
-    public RoomManager(@Lazy GameRoundService gameRoundService, @Lazy TimerService timerService) {
+    public RoomManager(@Lazy GameRoundService gameRoundService, @Lazy TimerService timerService,@Lazy WordBankService wordBankService) {
         this.gameRoundService = gameRoundService;
         this.timerService = timerService;
+        this.wordBankService = wordBankService;
     }
 
     public GameRoom createOrJoinRoom(String roomId, String username) {
@@ -37,9 +39,8 @@ public class RoomManager {
     }
 
     public List<String> getRandomWords() {
-        List<String> words = new ArrayList<>(List.of("apple", "banana", "cat", "dog", "house", "mountain"));
-        Collections.shuffle(words);
-        return words.subList(0, 3);
+
+        return wordBankService.takeRandom(3);
     }
 
     public void setWord(String roomId, String drawer, String word) {

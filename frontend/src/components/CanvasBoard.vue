@@ -274,6 +274,8 @@ const handleMouseMove = (e) => {
     draw(pos.x, pos.y, currentColor.value, brushSize.value, isEraser.value);
 
     if (props.client && props.client.connected) {
+        console.log("publishedd");
+        
         props.client.publish({
             destination: '/app/draw',
             body: JSON.stringify({
@@ -369,7 +371,11 @@ const handleRemoteDraw = (data) => {
     const msg = JSON.parse(data.body);
     
     // Don't draw our own strokes
+    console.log("msg",msg);
+    console.log("props",props);
+    
     if (msg.username === props.username) return;
+    console.log("otherone drawed");
     
     // Ensure we have a valid starting position
     const lastPos = remoteLastPositions.value[msg.username];
@@ -402,6 +408,7 @@ const handleRemoteClear = (data) => {
     //
     // Don't clear for our own clear action
     // if (msg.username === props.username) return;
+    console.log("clearrr");
     
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
     remoteLastPositions.value = {};
@@ -463,6 +470,7 @@ onMounted(() => {
         props.client.subscribe(`/topic/draw-start/${props.roomId}`, handleRemoteDrawStart);
         props.client.subscribe(`/topic/draw/${props.roomId}`, handleRemoteDraw);
         props.client.subscribe(`/topic/clear/${props.roomId}`, handleRemoteClear);
+        props.client.subscribe(`/topic/timer-ended/${props.roomId}`, handleRemoteClear);
         props.client.subscribe(`/topic/draw-end/${props.roomId}`, handleRemoteDrawEnd);
     }
 });
@@ -474,6 +482,7 @@ watch(() => props.client, (newClient) => {
         newClient.subscribe(`/topic/draw/${props.roomId}`, handleRemoteDraw);
         newClient.subscribe(`/topic/draw-end/${props.roomId}`, handleRemoteDrawEnd);
         newClient.subscribe(`/topic/clear/${props.roomId}`, handleRemoteClear);
+        newClient.subscribe(`/topic/timer-ended/${props.roomId}`, handleRemoteClear);
     }
 });
 

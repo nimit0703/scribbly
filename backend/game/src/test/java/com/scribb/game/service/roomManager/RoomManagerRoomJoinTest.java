@@ -76,9 +76,5 @@ class RoomManagerRoomJoinTest extends BaseRoomManagerTest {
 
         assertNotNull(words);
         assertEquals(3, words.size());
-        List<String> expectedWords = List.of("apple", "banana", "cat", "dog", "house", "mountain");
-        for (String word : words) {
-            assertTrue(expectedWords.contains(word));
-        }
     }
 }
