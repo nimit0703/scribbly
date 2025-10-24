@@ -3,18 +3,61 @@ import SockJS from 'sockjs-client';
 
 let client;
 let connected = false;
+let connectingPromise = null;
 
 export function connectWebSocket(onConnectCallback) {
-  const socket = new SockJS('https://m5kg94rx-8080.inc1.devtunnels.ms/ws');
-  client = new Client({
-    webSocketFactory: () => socket,
-    reconnectDelay: 5000,
-    onConnect: onConnectCallback,
-    debug: () => {} // optional logging
+  // If already connected, just call the callback
+  if (connected && client) {
+    onConnectCallback();
+    return Promise.resolve();
+  }
+
+  // If connection is in progress, return the existing promise
+  if (connectingPromise) {
+    return connectingPromise;
+  }
+
+  // Create new connection
+  connectingPromise = new Promise((resolve, reject) => {
+    const socket = new SockJS('http://localhost:8080/ws');
+    
+    client = new Client({
+      webSocketFactory: () => socket,
+      reconnectDelay: 5000,
+      onConnect: () => {
+        connected = true;
+        connectingPromise = null;
+        onConnectCallback();
+        resolve();
+      },
+      onDisconnect: () => {
+        connected = false;
+      },
+      onStompError: (frame) => {
+        console.error('STOMP error:', frame);
+        connectingPromise = null;
+        reject(new Error('STOMP connection failed'));
+      },
+      debug: () => {} // optional logging
+    });
+    
+    client.activate();
   });
-  client.activate();
+
+  return connectingPromise;
 }
 
 export function getStompClient() {
   return client;
+}
+
+export function isConnected() {
+  return connected;
+}
+
+export function disconnect() {
+  if (client) {
+    client.deactivate();
+    connected = false;
+  }
 }

@@ -1,16 +1,26 @@
 package com.scribb.game.controller;
 
-import com.scribb.game.model.*;
-import com.scribb.game.service.GameRoundService;
-import com.scribb.game.service.RoomManager;
-import com.scribb.game.service.TimerService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
-import java.util.List;
+import com.scribb.game.model.ChatMessage;
+import com.scribb.game.model.ClearMessage;
+import com.scribb.game.model.DrawEndMessage;
+import com.scribb.game.model.DrawMessage;
+import com.scribb.game.model.DrawStartMessage;
+import com.scribb.game.model.GameRoom;
+import com.scribb.game.model.JoinRequest;
+import com.scribb.game.model.RoundEndRequest;
+import com.scribb.game.model.StartRoundRequest;
+import com.scribb.game.model.TimerEndedMessage;
+import com.scribb.game.model.WordSelection;
+import com.scribb.game.service.GameRoundService;
+import com.scribb.game.service.RoomManager;
+import com.scribb.game.service.TimerService;
 @Controller
 public class GameWebSoketController {
 
@@ -136,6 +146,12 @@ public class GameWebSoketController {
     public void handleTimerEnded(@Payload TimerEndedMessage message) {
         // Timer ended, end the round
         gameRoundService.endRound(message.getRoomId());
+    }
+
+    @MessageMapping("/hint")
+    public void sendHint(@Payload ChatMessage message) {
+        // Broadcast the hint to all clients in the room
+        messagingTemplate.convertAndSend("/topic/hint/" + message.getRoomId(), message.getContent());
     }
 
     private void endRoundInternal(String roomId) {

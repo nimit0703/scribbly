@@ -1,15 +1,17 @@
 package com.scribb.game.service;
 
-import com.scribb.game.model.GameRoom;
-import com.scribb.game.model.Player;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import com.scribb.game.model.GameRoom;
+import com.scribb.game.model.Player;
+
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class RoomManager {
@@ -121,7 +123,29 @@ public class RoomManager {
         System.out.println("Next drawer selected: " + drawer); // ✅ debug log
         return drawer;
     }
-
+    
+    // Hint generation method
+    // at start of game return _ _ _ like lenghth of word
+    // then randome unhidden letters at intervals 10 seconds
+    public String generateHintForRoom(String roomId) {
+        GameRoom room = rooms.get(roomId);
+        if (room == null || room.getCurrentWord() == null) {
+            return "";
+        }
+        String word = room.getCurrentWord();
+        long elapsedMillis = System.currentTimeMillis() - room.getTimerStartTime(); 
+        int elapsedSeconds = (int) (elapsedMillis / 1000);
+        int lettersToReveal = Math.min(elapsedSeconds / 10, word.length()); 
+        StringBuilder hint = new StringBuilder("_".repeat(word.length()));
+        for (int i = 0; i < lettersToReveal; i++) {
+            int index;
+            do {
+                index = (int) (Math.random() * word.length());
+            } while (hint.charAt(index) != '_');
+            hint.setCharAt(index, word.charAt(index));
+        }
+        return hint.toString();
+    }
     @Scheduled(fixedRate = 5000)
     public void checkRoundTimeouts(){
         long now = System.currentTimeMillis();

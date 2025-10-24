@@ -1,13 +1,15 @@
 package com.scribb.game.service;
 
-import com.scribb.game.model.GameRoom;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import com.scribb.game.model.GameRoom;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +38,22 @@ public class TimerService {
                 activeTimers.remove(roomId);
             }
         }
+
+        //send hints at every 10 seconds of game and start of game as well
+        for( String roomId: activeTimers.keySet()){
+            GameRoom room = roomManager.getRoom(roomId);
+            if (room != null && room.isTimerActive()){
+                long elapsedMillis = System.currentTimeMillis() - room.getTimerStartTime();
+                int elapsedSeconds = (int) (elapsedMillis / 1000);
+                if (elapsedSeconds % 10 == 0) {
+                    String hint = roomManager.generateHintForRoom(roomId);
+                    System.out.println("==============Sending hint: " + hint + " to room: " + roomId);
+                    messagingTemplate.convertAndSend("/topic/hint/" + roomId, hint);
+                }
+            }
+        }
     }
+
 
     public void startTimer(String roomId){
         GameRoom room = roomManager.getRoom(roomId);
@@ -61,5 +78,7 @@ public class TimerService {
     public void resetTimer(String roomId) {
         stopTimer(roomId);
     }
+
+    
 
 }
