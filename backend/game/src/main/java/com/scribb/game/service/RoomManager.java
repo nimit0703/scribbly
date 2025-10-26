@@ -1,7 +1,11 @@
 package com.scribb.game.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.context.annotation.Lazy;
@@ -17,8 +21,10 @@ import jakarta.annotation.PostConstruct;
 public class RoomManager {
     @PostConstruct
     public void init() {
-        System.out.println("_____________________ RoomManager initialized ______________________________________________");
+        System.out.println(
+                "_____________________ RoomManager initialized ______________________________________________");
     }
+
     private final Map<String, GameRoom> rooms = new ConcurrentHashMap<>();
     private final List<String> wordBank = List.of("apple", "carrot", "house", "banana", "computer", "pizza");
 
@@ -26,7 +32,8 @@ public class RoomManager {
     private final TimerService timerService;
     private final WordBankService wordBankService;
 
-    public RoomManager(@Lazy GameRoundService gameRoundService, @Lazy TimerService timerService,@Lazy WordBankService wordBankService) {
+    public RoomManager(@Lazy GameRoundService gameRoundService, @Lazy TimerService timerService,
+            @Lazy WordBankService wordBankService) {
         this.gameRoundService = gameRoundService;
         this.timerService = timerService;
         this.wordBankService = wordBankService;
@@ -47,16 +54,17 @@ public class RoomManager {
 
     public void setWord(String roomId, String drawer, String word) {
         GameRoom room = rooms.get(roomId);
-        
+
         if (room != null) {
             String currentDrawer = room.getCurrentDrawer();
             if (currentDrawer != null) {
                 room.setCurrentWord(word);
                 room.setCurrentDrawer(drawer);
                 room.setRoundStartTime(System.currentTimeMillis());
-                System.out.println( "word is set for room" + room.getRoomId() + " :" +room.getCurrentWord());
+                System.out.println("word is set for room" + room.getRoomId() + " :" + room.getCurrentWord());
                 timerService.startTimer(roomId);
-                System.out.println( "Timer started for roomID" + roomId +" time left : "+ room.getRemainingTimeSeconds());
+                System.out.println(
+                        "Timer started for roomID" + roomId + " time left : " + room.getRemainingTimeSeconds());
             }
         }
     }
@@ -101,7 +109,8 @@ public class RoomManager {
 
     public boolean isRoundOver(String roomId) {
         GameRoom room = rooms.get(roomId);
-        if (room == null) return true;
+        if (room == null)
+            return true;
 
         long now = System.currentTimeMillis();
         boolean timeExpired = (now - room.getRoundStartTime()) > 60_000; // 60 sec round
@@ -114,7 +123,8 @@ public class RoomManager {
 
     public String pickNextDrawer(GameRoom room) {
         List<Player> players = room.getPlayers();
-        if (players.isEmpty()) return null;
+        if (players.isEmpty())
+            return null;
 
         int nextIndex = (room.getLastDrawerIndex() + 1) % players.size();
         room.setLastDrawerIndex(nextIndex);
@@ -123,31 +133,45 @@ public class RoomManager {
         System.out.println("Next drawer selected: " + drawer); // ✅ debug log
         return drawer;
     }
-    
-    // Hint generation method
-    // at start of game return _ _ _ like lenghth of word
-    // then randome unhidden letters at intervals 10 seconds
+
     public String generateHintForRoom(String roomId) {
         GameRoom room = rooms.get(roomId);
         if (room == null || room.getCurrentWord() == null) {
             return "";
         }
-        String word = room.getCurrentWord();
-        long elapsedMillis = System.currentTimeMillis() - room.getTimerStartTime(); 
+
+        String word = room.getCurrentWord().toUpperCase();
+        long elapsedMillis = System.currentTimeMillis() - room.getTimerStartTime();
         int elapsedSeconds = (int) (elapsedMillis / 1000);
-        int lettersToReveal = Math.min(elapsedSeconds / 10, word.length()); 
-        StringBuilder hint = new StringBuilder("_".repeat(word.length()));
-        for (int i = 0; i < lettersToReveal; i++) {
-            int index;
-            do {
-                index = (int) (Math.random() * word.length());
-            } while (hint.charAt(index) != '_');
-            hint.setCharAt(index, word.charAt(index));
+
+        // Reveal one new letter every 10 seconds
+        int lettersToReveal = Math.min(elapsedSeconds / 10, word.length());
+
+        // Use a deterministic seed so the same letters reveal each time
+        Random random = new Random(word.hashCode());
+
+        // Preselect all reveal positions once based on word length
+        List<Integer> revealOrder = new ArrayList<>();
+        for (int i = 0; i < word.length(); i++) {
+            revealOrder.add(i);
         }
-        return hint.toString();
+        Collections.shuffle(revealOrder, random);
+
+        // Build hint
+        char[] hint = new char[word.length()];
+        Arrays.fill(hint, '_');
+
+        for (int i = 0; i < lettersToReveal; i++) {
+            int index = revealOrder.get(i);
+            hint[index] = word.charAt(index);
+        }
+
+        // Optional: add spacing for readability
+        return String.join(" ", new String(hint).split(""));
     }
+
     @Scheduled(fixedRate = 5000)
-    public void checkRoundTimeouts(){
+    public void checkRoundTimeouts() {
         long now = System.currentTimeMillis();
         for (GameRoom room : rooms.values()) {
             if (room.getCurrentWord() != null && !room.isGameOver()) {
