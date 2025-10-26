@@ -1,90 +1,88 @@
 package com.scribb.game.model;
 
-import lombok.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import java.util.ArrayList;
-import java.util.*;
+import lombok.Data;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 public class GameRoom {
     private String roomId;
-    private List<Player> players = new ArrayList<>();
+    private List<Player> players = new CopyOnWriteArrayList<>();
     private String currentWord;
     private String currentDrawer;
-    private boolean gameStarted = false;
-    private int roundNumber = 1;
-    private final int totalRounds = 10;
-    private long roundStartTime;
-    private Set<String> correctGuessers = new HashSet<>();
+    private int roundNumber = 0;
     private int lastDrawerIndex = -1;
+    private long roundStartTime;
+    private long timerStartTime;
+    private boolean timerActive = false;
+    private int roundDurationMillis = 60000;
+    private Set<String> correctGuessers = new HashSet<>();
+    private boolean gameStarted = false;
+    private boolean gameOver = false;
+    private long lastActivityTime;
+
     public GameRoom(String roomId) {
         this.roomId = roomId;
-    }
-    private final long roundDurationMillis = 60_000; // 60 seconds
-
-    // New timer-related fields
-    private boolean timerActive = false;
-    private long timerStartTime = 0;
-
-    public void setCurrentWord(String currentWord) {
-        this.currentWord = currentWord;
-    }
-
-    public String getCurrentWord() {
-        return currentWord;
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
     public Optional<Player> getPlayer(String username) {
-        return players.stream().filter(p -> p.getUsername().equals(username)).findFirst();
-    }
-    public int getLastDrawerIndex() {
-        return lastDrawerIndex;
+        return players.stream()
+            .filter(p -> p.getUsername().equals(username))
+            .findFirst();
     }
 
-    public void setLastDrawerIndex(int index) {
-        this.lastDrawerIndex = index;
+    public void addPlayer(Player player) {
+        if (getPlayer(player.getUsername()).isEmpty()) {
+            players.add(player);
+            this.lastActivityTime = System.currentTimeMillis();
+        }
+    }
+
+    public void removePlayer(String username) {
+        players.removeIf(p -> p.getUsername().equals(username));
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
     public void resetForNextRound() {
-        currentWord = null;
-        currentDrawer = null;
-        correctGuessers.clear();
-        for (Player p : players) {
-            p.setHasGuessedCorrectly(false);
+        this.currentWord = null;
+        this.correctGuessers.clear();
+        
+        // Reset player guess status
+        players.forEach(p -> p.setHasGuessedCorrectly(false));
+        
+        // Increment round number
+        this.roundNumber++;
+        
+        // Check if game is over (you can customize this based on total rounds)
+        if (this.roundNumber > 3) { // Default 3 rounds
+            this.gameOver = true;
         }
-        roundNumber++;
-
-        timerActive = false;
-        timerStartTime = 0;
-        System.out.println("timer stopped/reset");
+        
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
-    public boolean isGameOver() {
-        return roundNumber > totalRounds;
-    }
-
-    // Timer methods
     public void startTimer() {
-        System.out.println("timer start");
         this.timerActive = true;
         this.timerStartTime = System.currentTimeMillis();
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
     public void stopTimer() {
-        System.out.println("timer stop");
         this.timerActive = false;
-    }
-
-    public long getRemainingTime() {
-        if (!this.timerActive) return 0;
-        long elapsed = System.currentTimeMillis() - timerStartTime;
-        return Math.max(0, roundDurationMillis - elapsed);
+        this.lastActivityTime = System.currentTimeMillis();
     }
 
     public int getRemainingTimeSeconds() {
-        return (int) (getRemainingTime() / 1000);
+        if (!timerActive) {
+            return 0;
+        }
+        long elapsed = System.currentTimeMillis() - timerStartTime;
+        long remaining = roundDurationMillis - elapsed;
+        return (int) Math.max(0, remaining / 1000);
     }
 }
