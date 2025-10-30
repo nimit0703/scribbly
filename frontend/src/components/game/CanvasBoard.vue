@@ -1,112 +1,75 @@
+<!-- src/components/game/CanvasBoard.vue -->
 <template>
-    <div class="flex flex-col h-full bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl shadow-lg overflow-hidden">
+    <div class="flex flex-col h-full bg-primary-50 rounded-xl overflow-hidden">
         <!-- Header with tools -->
-        <div class="bg-white border-b border-slate-200 p-4 shadow-sm">
+        <div v-if="isDrawer" class="bg-white border-b border-primary-200 p-4">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <!-- Drawing Tools -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     <!-- Brush Size -->
-                    <div v-if="isDrawer" class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-slate-700">Size:</label>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm font-medium text-primary-700">Size:</label>
                         <div class="flex items-center gap-1">
-                            <button 
-                                @click="setBrushSize(2)"
-                                :class="brushSize === 2 ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
-                                class="w-8 h-8 rounded-full transition-colors duration-200 flex items-center justify-center text-xs font-medium"
-                            >
-                                S
-                            </button>
-                            <button 
-                                @click="setBrushSize(5)"
-                                :class="brushSize === 5 ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
-                                class="w-8 h-8 rounded-full transition-colors duration-200 flex items-center justify-center text-xs font-medium"
-                            >
-                                M
-                            </button>
-                            <button 
-                                @click="setBrushSize(10)"
-                                :class="brushSize === 10 ? 'bg-blue-500 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'"
-                                class="w-8 h-8 rounded-full transition-colors duration-200 flex items-center justify-center text-xs font-medium"
-                            >
-                                L
+                            <button v-for="size in brushSizes" :key="size.value" @click="setBrushSize(size.value)"
+                                :class="brushSize === size.value ? 'bg-primary-700 text-white' : 'bg-primary-100 text-primary-700 hover:bg-primary-200'"
+                                class="w-8 h-8 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs font-medium">
+                                {{ size.label }}
                             </button>
                         </div>
                     </div>
 
                     <!-- Color Palette -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-slate-700">Color:</label>
-                        <div class="flex gap-1">
-                            <button 
-                                v-for="color in colors" 
-                                :key="color"
-                                @click="setColor(color)"
-                                :class="currentColor === color ? 'ring-2 ring-slate-400 ring-offset-2' : ''"
+                        <label class="text-sm font-medium text-primary-700">Color:</label>
+                        <div class="flex gap-1.5">
+                            <button v-for="color in colors" :key="color" @click="setColor(color)"
+                                :class="currentColor === color ? 'ring-2 ring-primary-900 ring-offset-1' : 'hover:ring-2 hover:ring-primary-300'"
                                 :style="{ backgroundColor: color }"
-                                class="w-8 h-8 rounded-full border-2 border-white shadow-sm hover:scale-110 transition-transform duration-200"
-                            ></button>
+                                class="w-7 h-7 rounded-lg border-2 border-primary-200 transition-all duration-200"></button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div v-if="isDrawer" class="flex items-center gap-2">
-                    <button 
-                        @click="clearCanvas"
-                        class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 font-medium text-sm shadow-sm"
-                    >
-                        Clear
-                    </button>
-                    <button 
-                        @click="toggleEraser"
-                        :class="isEraser ? 'bg-orange-500 hover:bg-orange-600' : 'bg-slate-500 hover:bg-slate-600'"
-                        class="px-4 py-2 text-white rounded-lg transition-colors duration-200 font-medium text-sm shadow-sm"
-                    >
+                <div class="flex items-center gap-2">
+                    <BaseButton variant="secondary" size="sm" @click="toggleEraser">
                         {{ isEraser ? 'Draw' : 'Eraser' }}
-                    </button>
+                    </BaseButton>
+                    <BaseButton variant="danger" size="sm" @click="clearCanvas">
+                        Clear
+                    </BaseButton>
                 </div>
             </div>
         </div>
 
         <!-- Canvas Container -->
         <div class="flex-1 p-4">
-            <div class="relative h-full bg-white rounded-lg shadow-inner border-2 border-slate-200 overflow-hidden">
+            <div class="relative h-full bg-white rounded-lg border-2 border-primary-200 overflow-hidden">
                 <!-- Canvas -->
-                <canvas 
-                    ref="canvas" 
-                    class="w-full h-full cursor-crosshair touch-none"
-                    :class="{ 'cursor-grab': isEraser }"
-                    @mousedown="handleMouseDown"
-                    @mouseup="handleMouseUp"
-                    @mousemove="handleMouseMove"
-                    @mouseleave="handleMouseUp"
-                    @touchstart="handleTouchStart"
-                    @touchend="handleTouchEnd"
-                    @touchmove="handleTouchMove"
-                ></canvas>
+                <canvas ref="canvas" class="w-full h-full touch-none"
+                    :class="isDrawer ? (isEraser ? 'cursor-crosshair' : 'cursor-crosshair') : 'cursor-default'"
+                    @mousedown="handleMouseDown" @mouseup="handleMouseUp" @mousemove="handleMouseMove"
+                    @mouseleave="handleMouseUp" @touchstart="handleTouchStart" @touchend="handleTouchEnd"
+                    @touchmove="handleTouchMove"></canvas>
 
                 <!-- Connection Status -->
                 <div class="absolute top-3 right-3">
-                    <div 
-                        :class="connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'"
+                    <div :class="connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'"
                         class="w-3 h-3 rounded-full shadow-sm"
-                        :title="connectionStatus === 'connected' ? 'Connected' : 'Disconnected'"
-                    ></div>
+                        :title="connectionStatus === 'connected' ? 'Connected' : 'Disconnected'"></div>
                 </div>
 
                 <!-- Current Brush Preview -->
-                <div class="absolute bottom-3 left-3 bg-white rounded-lg shadow-lg p-2 border border-slate-200">
-                    <div class="flex items-center gap-2">
-                        <div 
-                            :style="{ 
-                                backgroundColor: isEraser ? '#ffffff' : currentColor,
-                                width: Math.max(brushSize, 8) + 'px',
-                                height: Math.max(brushSize, 8) + 'px',
-                                border: isEraser ? '2px solid #e2e8f0' : '1px solid #e2e8f0'
-                            }"
-                            class="rounded-full"
-                        ></div>
-                        <span class="text-xs text-slate-600 font-medium">
+                <div v-if="isDrawer"
+                    class="absolute bottom-3 left-3 bg-white rounded-lg shadow-lg p-2.5 border border-primary-200">
+                    <div class="flex items-center gap-2.5">
+                        <div :style="{
+                            backgroundColor: isEraser ? '#ffffff' : currentColor,
+                            width: Math.max(brushSize, 8) + 'px',
+                            height: Math.max(brushSize, 8) + 'px',
+                            border: isEraser ? '2px solid #cbd5e1' : '1px solid #e2e8f0'
+                        }" class="rounded-full"></div>
+                        <span class="text-xs text-primary-700 font-medium">
                             {{ isEraser ? 'Eraser' : 'Brush' }} ({{ brushSize }}px)
                         </span>
                     </div>
@@ -118,6 +81,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import BaseButton from '../ui/BaseButton.vue';
 
 const props = defineProps({
     client: Object,
@@ -132,16 +96,34 @@ let isDrawing = false;
 let lastX = ref(0);
 let lastY = ref(0);
 const remoteLastPositions = ref({});
-const remoteDrawingStates  = ref({})
+const remoteDrawingStates = ref({});
+
 // Drawing state
 const currentColor = ref('#000000');
 const brushSize = ref(5);
 const isEraser = ref(false);
 
-// Available colors
+// Brush sizes configuration
+const brushSizes = [
+    { value: 2, label: 'S' },
+    { value: 5, label: 'M' },
+    { value: 10, label: 'L' }
+];
+
+// Available colors - more muted palette
 const colors = [
-    '#000000', '#ffffff', '#ef4444', '#f97316', '#eab308', 
-    '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'
+    '#0f172a', // Dark grey
+    '#475569', // Medium grey
+    '#94a3b8', // Light grey
+    '#ffffff', // White
+    '#ef4444', // Red
+    '#f97316', // Orange
+    '#eab308', // Yellow
+    '#22c55e', // Green
+    '#06b6d4', // Cyan
+    '#3b82f6', // Blue
+    '#8b5cf6', // Purple
+    '#ec4899'  // Pink
 ];
 
 // Connection status
@@ -151,33 +133,32 @@ const connectionStatus = computed(() => {
 
 // Drawing functions
 const draw = (x, y, color = '#000000', width = 3, erase = false) => {
-    // Ensure coordinates are within canvas bounds
     const clampedX = Math.max(0, Math.min(x, canvas.value.width));
     const clampedY = Math.max(0, Math.min(y, canvas.value.height));
-    
+
     ctx.lineWidth = width;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
+
     if (erase) {
         ctx.globalCompositeOperation = 'destination-out';
     } else {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = color;
     }
-    
-    // Don't use beginPath here - we want continuous strokes during drawing
+
     ctx.lineTo(clampedX, clampedY);
     ctx.stroke();
-    
+
     lastX.value = clampedX;
     lastY.value = clampedY;
 };
+
 const getMousePos = (e) => {
     const rect = canvas.value.getBoundingClientRect();
     const scaleX = canvas.value.width / rect.width;
     const scaleY = canvas.value.height / rect.height;
-    
+
     return {
         x: (e.clientX - rect.left) * scaleX,
         y: (e.clientY - rect.top) * scaleY
@@ -188,12 +169,13 @@ const getTouchPos = (e) => {
     const rect = canvas.value.getBoundingClientRect();
     const scaleX = canvas.value.width / rect.width;
     const scaleY = canvas.value.height / rect.height;
-    
+
     return {
         x: (e.touches[0].clientX - rect.left) * scaleX,
         y: (e.touches[0].clientY - rect.top) * scaleY
     };
 };
+
 // Tool functions
 const setColor = (color) => {
     currentColor.value = color;
@@ -212,8 +194,7 @@ const clearCanvas = () => {
     if (!props.isDrawer) return;
 
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
-    
-    // Emit clear event
+
     if (props.client && props.client.connected) {
         props.client.publish({
             destination: '/app/clear',
@@ -233,7 +214,7 @@ const handleMouseDown = (e) => {
     const pos = getMousePos(e);
     lastX.value = pos.x;
     lastY.value = pos.y;
-    
+
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
 
@@ -253,9 +234,7 @@ const handleMouseDown = (e) => {
 const handleMouseUp = () => {
     if (!isDrawing) return;
     isDrawing = false;
-    
-    // ctx.beginPath();
-    // Emit stroke end event
+
     if (props.client && props.client.connected) {
         props.client.publish({
             destination: '/app/draw-end',
@@ -274,8 +253,6 @@ const handleMouseMove = (e) => {
     draw(pos.x, pos.y, currentColor.value, brushSize.value, isEraser.value);
 
     if (props.client && props.client.connected) {
-        console.log("publishedd");
-        
         props.client.publish({
             destination: '/app/draw',
             body: JSON.stringify({
@@ -291,8 +268,7 @@ const handleMouseMove = (e) => {
             }),
         });
     }
-};;
-
+};
 
 const handleTouchStart = (e) => {
     if (!props.isDrawer) return;
@@ -306,7 +282,6 @@ const handleTouchStart = (e) => {
     ctx.beginPath();
     ctx.moveTo(touch.x, touch.y);
 
-    // Emit stroke start event
     if (props.client && props.client.connected) {
         props.client.publish({
             destination: '/app/draw-start',
@@ -321,14 +296,11 @@ const handleTouchStart = (e) => {
 };
 
 const handleTouchEnd = (e) => {
-     if (!props.isDrawer) return;
-    
+    if (!props.isDrawer) return;
+
     e.preventDefault();
     isDrawing = false;
 
-    // ctx.beginPath();
-
-    // Emit stroke end event
     if (props.client && props.client.connected) {
         props.client.publish({
             destination: '/app/draw-end',
@@ -342,12 +314,11 @@ const handleTouchEnd = (e) => {
 
 const handleTouchMove = (e) => {
     e.preventDefault();
-    if (!isDrawing || !props.isDrawer) return
+    if (!isDrawing || !props.isDrawer) return;
 
     const touch = getTouchPos(e);
     draw(touch.x, touch.y, currentColor.value, brushSize.value, isEraser.value);
 
-    // Emit drawing event
     if (props.client && props.client.connected) {
         props.client.publish({
             destination: '/app/draw',
@@ -369,61 +340,46 @@ const handleTouchMove = (e) => {
 // Remote drawing handlers
 const handleRemoteDraw = (data) => {
     const msg = JSON.parse(data.body);
-    
-    // Don't draw our own strokes
-    console.log("msg",msg);
-    console.log("props",props);
-    
+
     if (msg.username === props.username) return;
-    console.log("otherone drawed");
-    
-    // Ensure we have a valid starting position
+
     const lastPos = remoteLastPositions.value[msg.username];
     if (!lastPos) {
-        // If no last position, just update it and return
         remoteLastPositions.value[msg.username] = { x: msg.x, y: msg.y };
         return;
     }
-    
+
     ctx.lineWidth = msg.width;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
+
     if (msg.isEraser) {
         ctx.globalCompositeOperation = 'destination-out';
     } else {
         ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = msg.color;
     }
-    
+
     ctx.lineTo(msg.x, msg.y);
     ctx.stroke();
-    
-    // Update the last position for this user
+
     remoteLastPositions.value[msg.username] = { x: msg.x, y: msg.y };
 };
 
-const handleRemoteClear = (data) => {
-    // const msg = JSON.parse(data.body);
-    //
-    // Don't clear for our own clear action
-    // if (msg.username === props.username) return;
-    console.log("clearrr");
-    
+const handleRemoteClear = () => {
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
     remoteLastPositions.value = {};
     remoteDrawingStates.value = {};
 };
-// Updated remote drawing handlers:
+
 const handleRemoteDrawStart = (data) => {
     const msg = JSON.parse(data.body);
-    
+
     if (msg.username === props.username) return;
-    
-    // Mark this user as actively drawing and set their starting position
+
     remoteDrawingStates.value[msg.username] = true;
     remoteLastPositions.value[msg.username] = { x: msg.x, y: msg.y };
-     // Start a new path for remote drawing
+
     ctx.beginPath();
     ctx.moveTo(msg.x, msg.y);
 };
@@ -432,23 +388,19 @@ const handleRemoteDrawEnd = (data) => {
     const msg = JSON.parse(data.body);
     if (msg.username !== props.username) {
         remoteDrawingStates.value[msg.username] = false;
-
-        // ctx.beginPath();
     }
 };
+
 // Resize handler
 const resizeCanvas = () => {
     const c = canvas.value;
     const rect = c.getBoundingClientRect();
-    
-    // Only resize if size actually changed
+
     if (c.width === rect.width && c.height === rect.height) return;
-    
-    // Clear and resize - don't try to preserve stretched content
+
     c.width = rect.width;
     c.height = rect.height;
-    
-    // Reset all remote positions when canvas resizes
+
     remoteLastPositions.value = {};
     remoteDrawingStates.value = {};
 };
@@ -457,15 +409,12 @@ const resizeCanvas = () => {
 onMounted(() => {
     const c = canvas.value;
     ctx = c.getContext('2d');
-    
-    // Set initial canvas size
+
     resizeCanvas();
-    
-    // Setup resize observer
+
     const resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(c.parentElement);
-    
-    // Subscribe to drawing events
+
     if (props.client && props.client.connected) {
         props.client.subscribe(`/topic/draw-start/${props.roomId}`, handleRemoteDrawStart);
         props.client.subscribe(`/topic/draw/${props.roomId}`, handleRemoteDraw);
@@ -475,7 +424,6 @@ onMounted(() => {
     }
 });
 
-// Watch for client changes
 watch(() => props.client, (newClient) => {
     if (newClient && newClient.connected) {
         newClient.subscribe(`/topic/draw-start/${props.roomId}`, handleRemoteDrawStart);
@@ -487,6 +435,6 @@ watch(() => props.client, (newClient) => {
 });
 
 onBeforeUnmount(() => {
-    // Cleanup is handled automatically by Vue
+    // Cleanup handled by Vue
 });
 </script>
