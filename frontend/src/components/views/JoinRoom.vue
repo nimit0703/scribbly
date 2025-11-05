@@ -1,111 +1,130 @@
 <!-- src/views/JoinGame.vue -->
 <template>
-  <div
-    class="min-h-screen bg-gradient-to-br from-primary-100 via-primary-50 to-accent-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-lg">
+  <div class="min-h-screen flex items-center justify-center p-4 font-inter bg-notion-dark">
+    <div class="w-full max-w-md">
       <!-- Main Card -->
-      <BaseCard noPadding>
+      <div class="bg-notion-gray-darker  rounded-lg hover:shadow-2xl transition-all duration-200">
         <!-- Header -->
-        <div class="bg-primary-800 p-8 text-center">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-10 rounded-full mb-4">
-            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="p-8 text-center relative">
+          <div
+            class="inline-flex items-center justify-center w-14 h-14 bg-notion-gray-dark rounded-full mb-4 border border-notion-border">
+            <svg class="w-7 h-7 text-notion-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
             </svg>
           </div>
-          <h1 class="text-3xl font-bold text-white mb-2">Skribbl Room</h1>
-          <p class="text-primary-200 text-lg">Draw, guess, and have fun!</p>
+          <h1 class="text-2xl font-semibold text-notion-text-primary mb-1">Scribble Game</h1>
+          <p class="text-notion-text-secondary">Draw & Guess with Friends</p>
         </div>
 
         <!-- Form Content -->
-        <div class="p-8">
+        <div class="px-8 pb-8">
           <form @submit.prevent="joinGame" class="space-y-6">
             <!-- Username Input -->
-            <BaseInput id="username" v-model="username" label="Your Name" placeholder="Enter your name"
-              :error="errors.username" @input="clearError('username')">
-              <template #icon>
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </template>
-            </BaseInput>
+            <div class="space-y-2">
+              <BaseInput id="username" label="Your Name" v-model="username" placeholder="Enter your nickname"
+                :error="errors.username" @update:modelValue="clearError('username')">
+                <template #icon>
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </template>
+              </BaseInput>
+            </div>
 
             <!-- Room ID Input -->
-            <BaseInput id="roomId" v-model="roomId" label="Room ID" placeholder="Enter Room ID" :error="errors.roomId"
-              @input="clearError('roomId')">
-              <template #icon>
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </template>
-            </BaseInput>
+            <div class="space-y-2">
+              <BaseInput id="roomId" label="Room ID" v-model="roomId" placeholder="Enter room code"
+                :error="errors.roomId" @update:modelValue="clearError('roomId')">
+                <template #icon>
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </template>
+              </BaseInput>
+            </div>
 
             <!-- Join Button -->
-            <BaseButton type="submit" variant="ghost" size="lg" :disabled="isConnecting"
-              class="w-full text-black border bg-blue">
-              <!-- <template #icon-left v-if="isConnecting">
-                <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                  </path>
+            <BaseButton variant="primary" size="lg" @click="joinGame" :disabled="isConnecting" class="w-full">
+              {{ isConnecting ? 'Joining...' : 'Join Room' }}
+              <template #icon-right>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-              </template> -->
-              {{ isConnecting ? 'Connecting...' : 'Join Room' }}
+              </template>
             </BaseButton>
           </form>
 
           <!-- Quick Actions -->
-          <div class="mt-8 pt-6 border-t border-primary-200">
+          <div class="mt-8 pt-6 border-t border-notion-border">
             <div class="flex flex-col sm:flex-row gap-3">
-              <BaseButton variant="ghost" size="sm" @click="generateRandomRoom" class="flex-1 text-black">
-                🎲 Random Room
+
+              <BaseButton variant="secondary" size="md" @click="generateRandomRoom" class="w-full">
+                Random Room
+                <template #icon-right>
+                  <i data-feather="message-square" class="w-4 h-4 text-notion-text-muted"></i>
+                </template>
               </BaseButton>
-              <BaseButton variant="ghost" size="sm" @click="generateRandomName" class="flex-1 text-black">
-                👤 Random Name
+              <BaseButton variant="secondary" size="md" @click="generateRandomName" class="w-full">
+                Random Name
+                <template #icon-right>
+                  <i data-feather="user" class="w-4 h-4 text-notion-text-muted"></i>
+                </template>
               </BaseButton>
             </div>
           </div>
 
           <!-- Game Rules -->
-          <div class="mt-6 p-4 bg-primary-50 rounded-xl border border-primary-200">
-            <h3 class="font-semibold text-primary-900 mb-2 flex items-center text-sm">
-              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <div
+            class="mt-6 p-4 bg-notion-gray-dark rounded border border-transparent hover:border-notion-border transition-all duration-200">
+            <h3 class="font-medium text-notion-text-primary mb-3 flex items-center text-sm">
+              <svg class="w-4 h-4 mr-2 text-notion-text-muted" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
                   d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                   clip-rule="evenodd" />
               </svg>
               How to Play
             </h3>
-            <ul class="text-primary-700 text-sm space-y-1">
-              <li>• Draw the word when it's your turn</li>
-              <li>• Guess what others are drawing</li>
-              <li>• Earn points for correct guesses</li>
-              <li>• Have fun with friends!</li>
+            <ul class="text-notion-text-secondary text-sm space-y-2">
+              <li class="flex items-start">
+                <span class="text-notion-text-muted mr-2">•</span>
+                <span>Draw the word when it's your turn</span>
+              </li>
+              <li class="flex items-start">
+                <span class="text-notion-text-muted mr-2">•</span>
+                <span>Guess what others are drawing</span>
+              </li>
+              <li class="flex items-start">
+                <span class="text-notion-text-muted mr-2">•</span>
+                <span>Earn points for correct guesses</span>
+              </li>
+              <li class="flex items-start">
+                <span class="text-notion-text-muted mr-2">•</span>
+                <span>Have fun with friends!</span>
+              </li>
             </ul>
           </div>
         </div>
-      </BaseCard>
+      </div>
 
       <!-- Footer -->
-      <div class="text-center mt-6 text-primary-600 text-sm">
-        <p>Create memorable moments with friends 🎨</p>
+      <div class="text-center mt-6 text-notion-text-muted text-sm">
+        <p>Create awesome drawings with friends! ✨</p>
       </div>
     </div>
 
     <!-- Success Toast -->
     <transition name="toast">
-      <div v-if="showSuccessToast"
-        class="fixed top-4 right-4 bg-primary-800 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+      <div v-if="showSuccessToast" class="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-50">
         <div class="flex items-center space-x-2">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
               clip-rule="evenodd" />
           </svg>
-          <span>Joining room...</span>
+          <span class="text-sm">Joining room...</span>
         </div>
       </div>
     </transition>
@@ -116,9 +135,8 @@
 import { ref, reactive, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { connectWebSocket, getStompClient } from '../../ws/stompClient.js';
-import BaseButton from '../ui/BaseButton.vue';
 import BaseInput from '../ui/BaseInput.vue';
-import BaseCard from '../ui/BaseCard.vue';
+import BaseButton from '../ui/BaseButton.vue';
 
 const username = ref('');
 const roomId = ref('');
@@ -133,7 +151,8 @@ const errors = reactive({
 
 const randomNames = [
   'ArtistAce', 'DoodleDash', 'SketchStar', 'PaintPro', 'DrawMaster',
-  'ColorKing', 'BrushBoss', 'InkHero', 'LineLeader', 'ShadeShark'
+  'ColorKing', 'BrushBoss', 'InkHero', 'LineLeader', 'ShadeShark',
+  'PixelPicasso', 'CanvasKing', 'SketchSavant', 'DoodleDynamo', 'InkWizard'
 ];
 
 const generateRandomRoom = () => {
@@ -148,7 +167,7 @@ const generateRandomRoom = () => {
 
 const generateRandomName = () => {
   const randomIndex = Math.floor(Math.random() * randomNames.length);
-  username.value = randomNames[randomIndex] + Math.floor(Math.random() * 1000);
+  username.value = randomNames[randomIndex] + Math.floor(Math.random() * 100);
   clearError('username');
 };
 

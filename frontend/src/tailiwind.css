@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-notion-dark: #191919;
+  --color-notion-gray-dark: #2d2d2d;
+  --color-notion-gray-darker: #1f1f1f;
+  --color-notion-border: #3d3d3d;
+  --color-notion-border-hover: #525252;
+  --color-notion-text-primary: #ffffff;
+  --color-notion-text-secondary: #b5b5b5;
+  --color-notion-text-muted: #8a8a8a;
+  --color-notion-accent: #e16259;
+  --color-notion-accent-hover: #d1524a;
+}

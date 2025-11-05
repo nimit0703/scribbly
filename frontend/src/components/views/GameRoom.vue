@@ -1,39 +1,32 @@
 <!-- src/views/GameRoom.vue -->
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-primary-100 to-primary-50 p-2 sm:p-4">
-    <div class="max-w-7xl mx-auto">
+  <div class="min-h-screen  bg-notion-dark p-4">
+    <div class=" mx-auto">
       <!-- Header -->
       <BaseCard class="mb-4">
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary-700 rounded-full flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-              </svg>
+            <div class="w-10 h-10 bg-notion-accent rounded-lg flex items-center justify-center">
+              <i data-feather="edit-3" class="text-notion-text-primary"></i>
             </div>
             <div>
-              <h1 class="text-xl sm:text-2xl font-bold text-primary-900">{{ username }}</h1>
-              <p class="text-sm text-primary-600">Room: <span class="font-semibold text-primary-700">{{ roomId }}</span>
-              </p>
+              <h1 class="text-xl font-semibold text-notion-text-primary">{{ username }}</h1>
+              <p class="text-sm text-notion-text-secondary">Room: <span class="font-medium text-notion-text-primary">{{ roomId }}</span></p>
             </div>
           </div>
 
           <div class="flex items-center gap-4">
             <!-- Timer -->
             <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h1 class="text-xl font-bold" :class="timer < 10 ? 'text-red-600' : 'text-primary-800'">
+              <i data-feather="clock" class="text-notion-text-secondary"></i>
+              <h1 class="text-xl font-semibold" :class="timer < 10 ? 'text-notion-accent' : 'text-notion-text-primary'">
                 {{ timer }}s
               </h1>
             </div>
 
             <!-- Players Count -->
-            <div class="flex items-center gap-2 text-sm text-primary-600">
-              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <div class="flex items-center gap-2 text-sm text-notion-text-secondary">
+              <div class="w-2 h-2 bg-notion-accent rounded-full"></div>
               <span>{{ players.length }} players</span>
             </div>
           </div>
@@ -46,35 +39,32 @@
         <div class="lg:col-span-3 order-2 lg:order-1">
           <BaseCard noPadding>
             <!-- Canvas Header -->
-            <div class="bg-primary-700 p-4">
+            <div class="bg-notion-gray-dark p-4 border-b border-notion-border">
               <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                <div class="text-white">
+                <div class="text-notion-text-primary">
                   <h2 class="text-lg font-semibold">Drawing Canvas</h2>
-                  <p class="text-sm text-primary-200">{{ isDrawer ? 'You are drawing!' : 'Guess what\'s being drawn' }}
-                  </p>
+                  <p class="text-sm text-notion-text-secondary">{{ isDrawer ? 'You are drawing!' : 'Guess what\'s being drawn' }}</p>
                 </div>
 
                 <!-- Control Buttons -->
                 <div class="flex gap-2">
-                  <BaseButton v-if="isDrawer && !selectedWord" variant="accent" @click="startRound"
-                    class="animate-bounce">
-                    <template #icon-left>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.01M15 10h1.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </template>
+                  <BaseButton 
+                    v-if="isDrawer && !selectedWord" 
+                    variant="accent" 
+                    @click="startRound"
+                    class="flex items-center gap-2"
+                  >
+                    <i data-feather="play" class="w-4 h-4"></i>
                     Start Round
                   </BaseButton>
 
-                  <BaseButton v-if="isDrawer && selectedWord" variant="danger" @click="endRound">
-                    <template #icon-left>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9l3 3l3-3" />
-                      </svg>
-                    </template>
+                  <BaseButton 
+                    v-if="isDrawer && selectedWord" 
+                    variant="accent" 
+                    @click="endRound"
+                    class="flex items-center gap-2"
+                  >
+                    <i data-feather="square" class="w-4 h-4"></i>
                     End Round
                   </BaseButton>
                 </div>
@@ -82,30 +72,32 @@
             </div>
 
             <!-- Hint Section -->
-            <div v-if="hint" class="bg-primary-100 p-4 border-b border-primary-200">
+            <div v-if="hint" class="bg-notion-gray-darker p-4 border-b border-notion-border">
               <div class="flex items-center justify-center gap-3">
-                <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                <span class="text-base text-primary-800">
+                <i data-feather="help-circle" class="text-notion-text-secondary"></i>
+                <span class="text-base text-notion-text-primary">
                   Hint: <span class="mx-4 tracking-[.25em] font-semibold">{{ hint }}</span>
                 </span>
               </div>
             </div>
 
             <!-- Canvas Container -->
-            <div class="relative bg-primary-50">
+            <div class="relative bg-notion-gray-darker">
               <CanvasBoard :client="client" :roomId="roomId" :username="username" :isDrawer="isDrawer" />
 
               <!-- Word Selection Modal -->
-              <div v-if="isDrawer && wordOptions.length > 0"
-                class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-10">
-                <div class="bg-white rounded-xl p-6 max-w-md w-full">
-                  <h3 class="text-xl font-bold text-center mb-4 text-primary-900">Choose a word to draw:</h3>
+              <div v-if="isDrawer && wordOptions.length > 0" class="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-10">
+                <div class="bg-notion-gray-dark rounded-lg border border-notion-border p-6 max-w-md w-full">
+                  <h3 class="text-xl font-semibold text-center mb-4 text-notion-text-primary">Choose a word to draw:</h3>
                   <div class="grid grid-cols-1 gap-3">
-                    <BaseButton v-for="word in wordOptions" :key="word" variant="primary" size="lg"
-                      @click="selectWord(word)" class="w-full">
+                    <BaseButton 
+                      v-for="word in wordOptions" 
+                      :key="word" 
+                      variant="secondary" 
+                      size="lg"
+                      @click="selectWord(word)" 
+                      class="w-full text-center"
+                    >
                       {{ word }}
                     </BaseButton>
                   </div>
@@ -129,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { useRoute } from 'vue-router';
 import BaseCard from '../ui/BaseCard.vue';
 import BaseButton from '../ui/BaseButton.vue';
@@ -137,6 +129,8 @@ import PlayerList from '../game/PlayerList.vue';
 import ChatPanel from '../game/ChatPanel.vue';
 import CanvasBoard from '../game/CanvasBoard.vue';
 import { connectWebSocket, getStompClient } from '../../ws/stompClient';
+
+// Initialize Feather icons
 
 const route = useRoute();
 const username = route.query.username;
@@ -152,6 +146,11 @@ const selectedWord = ref('');
 const timer = ref(0);
 
 onMounted(() => {
+  // Replace Feather icons
+  nextTick(() => {
+    feather.replace();
+  });
+  
   connectWebSocket(() => {
     client.value = getStompClient();
 

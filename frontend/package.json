@@ -12,12 +12,13 @@
     "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "sockjs-client": "^1.6.1",
-    "tailwindcss": "^4.1.11",
     "vue": "^3.5.17",
+    "vue-bits": "^1.1.1",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.0",
+    "tailwindcss": "^4.1.16",
     "vite": "^7.0.0"
   }
 }

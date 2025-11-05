@@ -1,17 +1,17 @@
 <!-- src/components/game/CanvasBoard.vue -->
 <template>
-    <div class="flex flex-col h-full bg-primary-50 rounded-xl overflow-hidden">
+    <div class="flex flex-col h-full bg-notion-gray-darker rounded-lg overflow-hidden">
         <!-- Header with tools -->
-        <div v-if="isDrawer" class="bg-white border-b border-primary-200 p-4">
+        <div v-if="isDrawer" class="bg-notion-gray-dark border-b border-notion-border p-4">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <!-- Drawing Tools -->
                 <div class="flex items-center gap-4">
                     <!-- Brush Size -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-primary-700">Size:</label>
+                        <label class="text-sm font-medium text-notion-text-primary">Size:</label>
                         <div class="flex items-center gap-1">
                             <button v-for="size in brushSizes" :key="size.value" @click="setBrushSize(size.value)"
-                                :class="brushSize === size.value ? 'bg-primary-700 text-white' : 'bg-primary-100 text-primary-700 hover:bg-primary-200'"
+                                :class="brushSize === size.value ? 'bg-notion-accent text-notion-text-primary' : 'bg-notion-border text-notion-text-primary hover:bg-notion-border-hover'"
                                 class="w-8 h-8 rounded-lg transition-colors duration-200 flex items-center justify-center text-xs font-medium">
                                 {{ size.label }}
                             </button>
@@ -20,12 +20,12 @@
 
                     <!-- Color Palette -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-primary-700">Color:</label>
+                        <label class="text-sm font-medium text-notion-text-primary">Color:</label>
                         <div class="flex gap-1.5">
                             <button v-for="color in colors" :key="color" @click="setColor(color)"
-                                :class="currentColor === color ? 'ring-2 ring-primary-900 ring-offset-1' : 'hover:ring-2 hover:ring-primary-300'"
+                                :class="currentColor === color ? 'ring-2 ring-notion-accent ring-offset-1 ring-offset-notion-gray-dark' : 'hover:ring-2 hover:ring-notion-border-hover'"
                                 :style="{ backgroundColor: color }"
-                                class="w-7 h-7 rounded-lg border-2 border-primary-200 transition-all duration-200"></button>
+                                class="w-7 h-7 rounded-lg border-2 border-notion-border transition-all duration-200"></button>
                         </div>
                     </div>
                 </div>
@@ -35,7 +35,7 @@
                     <BaseButton variant="secondary" size="sm" @click="toggleEraser">
                         {{ isEraser ? 'Draw' : 'Eraser' }}
                     </BaseButton>
-                    <BaseButton variant="danger" size="sm" @click="clearCanvas">
+                    <BaseButton variant="accent" size="sm" @click="clearCanvas">
                         Clear
                     </BaseButton>
                 </div>
@@ -44,9 +44,9 @@
 
         <!-- Canvas Container -->
         <div class="flex-1 p-4">
-            <div class="relative h-full bg-white rounded-lg border-2 border-primary-200 overflow-hidden">
+            <div class="relative h-full bg-notion-dark rounded-lg border-2 border-notion-border overflow-hidden">
                 <!-- Canvas -->
-                <canvas ref="canvas" class="w-full h-full touch-none"
+                <canvas ref="canvas" class="w-full h-full touch-none bg-notion-gray-darker"
                     :class="isDrawer ? (isEraser ? 'cursor-crosshair' : 'cursor-crosshair') : 'cursor-default'"
                     @mousedown="handleMouseDown" @mouseup="handleMouseUp" @mousemove="handleMouseMove"
                     @mouseleave="handleMouseUp" @touchstart="handleTouchStart" @touchend="handleTouchEnd"
@@ -54,22 +54,22 @@
 
                 <!-- Connection Status -->
                 <div class="absolute top-3 right-3">
-                    <div :class="connectionStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'"
+                    <div :class="connectionStatus === 'connected' ? 'bg-notion-accent' : 'bg-red-500'"
                         class="w-3 h-3 rounded-full shadow-sm"
                         :title="connectionStatus === 'connected' ? 'Connected' : 'Disconnected'"></div>
                 </div>
 
                 <!-- Current Brush Preview -->
                 <div v-if="isDrawer"
-                    class="absolute bottom-3 left-3 bg-white rounded-lg shadow-lg p-2.5 border border-primary-200">
+                    class="absolute bottom-3 left-3 bg-notion-gray-dark rounded-lg shadow-lg p-2.5 border border-notion-border">
                     <div class="flex items-center gap-2.5">
                         <div :style="{
                             backgroundColor: isEraser ? '#ffffff' : currentColor,
                             width: Math.max(brushSize, 8) + 'px',
                             height: Math.max(brushSize, 8) + 'px',
-                            border: isEraser ? '2px solid #cbd5e1' : '1px solid #e2e8f0'
+                            border: isEraser ? '2px solid #3d3d3d' : '1px solid #3d3d3d'
                         }" class="rounded-full"></div>
-                        <span class="text-xs text-primary-700 font-medium">
+                        <span class="text-xs text-notion-text-primary font-medium">
                             {{ isEraser ? 'Eraser' : 'Brush' }} ({{ brushSize }}px)
                         </span>
                     </div>
@@ -99,7 +99,7 @@ const remoteLastPositions = ref({});
 const remoteDrawingStates = ref({});
 
 // Drawing state
-const currentColor = ref('#000000');
+const currentColor = ref('#ffffff'); // Default to white for dark background
 const brushSize = ref(5);
 const isEraser = ref(false);
 
@@ -110,20 +110,20 @@ const brushSizes = [
     { value: 10, label: 'L' }
 ];
 
-// Available colors - more muted palette
+// Available colors - optimized for dark theme
 const colors = [
-    '#0f172a', // Dark grey
-    '#475569', // Medium grey
-    '#94a3b8', // Light grey
     '#ffffff', // White
-    '#ef4444', // Red
-    '#f97316', // Orange
-    '#eab308', // Yellow
-    '#22c55e', // Green
-    '#06b6d4', // Cyan
+    '#b5b5b5', // Light gray
+    '#8a8a8a', // Medium gray
+    '#e16259', // Notion accent (red)
     '#3b82f6', // Blue
+    '#22c55e', // Green
+    '#eab308', // Yellow
+    '#f97316', // Orange
     '#8b5cf6', // Purple
-    '#ec4899'  // Pink
+    '#ec4899', // Pink
+    '#06b6d4', // Cyan
+    '#000000'  // Black
 ];
 
 // Connection status
@@ -132,7 +132,7 @@ const connectionStatus = computed(() => {
 });
 
 // Drawing functions
-const draw = (x, y, color = '#000000', width = 3, erase = false) => {
+const draw = (x, y, color = '#ffffff', width = 3, erase = false) => {
     const clampedX = Math.max(0, Math.min(x, canvas.value.width));
     const clampedY = Math.max(0, Math.min(y, canvas.value.height));
 
@@ -400,6 +400,10 @@ const resizeCanvas = () => {
 
     c.width = rect.width;
     c.height = rect.height;
+
+    // Set default background for canvas
+    ctx.fillStyle = '#191919'; // notion-dark
+    ctx.fillRect(0, 0, c.width, c.height);
 
     remoteLastPositions.value = {};
     remoteDrawingStates.value = {};
