@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import JoinRoom from './components/JoinRoom.vue';
-import GameRoom from './components/GameRoom.vue';
+import JoinRoom from './components/views/JoinRoom.vue';
+import GameRoom from './components/views/GameRoom.vue';
 
 const routes = [
   { path: '/', name: 'JoinRoom', component: JoinRoom },
