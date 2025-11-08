@@ -77,34 +77,21 @@
           </div>
 
           <!-- Game Rules -->
-          <div
-            class="mt-6 p-4 bg-notion-gray-dark rounded border border-transparent hover:border-notion-border transition-all duration-200">
-            <h3 class="font-medium text-notion-text-primary mb-3 flex items-center text-sm">
-              <svg class="w-4 h-4 mr-2 text-notion-text-muted" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clip-rule="evenodd" />
-              </svg>
-              How to Play
-            </h3>
-            <ul class="text-notion-text-secondary text-sm space-y-2">
-              <li class="flex items-start">
-                <span class="text-notion-text-muted mr-2">•</span>
-                <span>Draw the word when it's your turn</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-notion-text-muted mr-2">•</span>
-                <span>Guess what others are drawing</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-notion-text-muted mr-2">•</span>
-                <span>Earn points for correct guesses</span>
-              </li>
-              <li class="flex items-start">
-                <span class="text-notion-text-muted mr-2">•</span>
-                <span>Have fun with friends!</span>
-              </li>
-            </ul>
+          <div class="mt-6 p-4 mx-auto flex overflow-hidden relative min-h-64">
+            <!-- Random SVG elements will be positioned here -->
+            <div v-for="(svg, index) in svgElements" :key="index" class="absolute" :style="{
+              left: `${svg.position.x}%`,
+              top: `${svg.position.y}%`,
+              transform: `rotate(${svg.rotation}deg) scale(${svg.scale})`,
+              opacity: svg.opacity,
+              zIndex: svg.zIndex,
+              margin: '10px'
+            }">
+              <SVGThinking v-if="svg.component === 'SVGThinking'" :class="`h-${svg.size} ${svg.color}`" />
+              <SVGThinking2 v-else-if="svg.component === 'SVGThinking2'" :class="`h-${svg.size} ${svg.color}`" />
+              <Squirrel v-else-if="svg.component === 'Squirrel'" :class="`h-${svg.size} ${svg.color}`" />
+              <Crocodile v-else-if="svg.component === 'Crocodile'" :class="`h-${svg.size} ${svg.color}`" />
+            </div>
           </div>
         </div>
       </div>
@@ -132,11 +119,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, nextTick } from 'vue';
+import { ref, reactive, nextTick, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { connectWebSocket, getStompClient } from '../../ws/stompClient.js';
 import BaseInput from '../ui/BaseInput.vue';
 import BaseButton from '../ui/BaseButton.vue';
+import SVGThinking from '../ui/SVG/SVGThinking.vue';
+import SVGThinking2 from '../ui/SVG/SVGThinking2.vue';
+import Squirrel from '../ui/SVG/Squirrel.vue';
+import Crocodile from '../ui/SVG/Crocodile.vue';
 
 const username = ref('');
 const roomId = ref('');
@@ -149,12 +140,70 @@ const errors = reactive({
   roomId: ''
 });
 
+const svgElements = ref([])
+const svgComponents = ref(['SVGThinking', 'SVGThinking2', 'Squirrel', 'Crocodile'])
+const colors = ref([
+  'text-blue-400',
+  'text-purple-400',
+  'text-indigo-500',
+  'text-pink-400',
+  'text-teal-400'
+])
+const sizes = ref([32, 40, 48])
 const randomNames = [
   'ArtistAce', 'DoodleDash', 'SketchStar', 'PaintPro', 'DrawMaster',
   'ColorKing', 'BrushBoss', 'InkHero', 'LineLeader', 'ShadeShark',
   'PixelPicasso', 'CanvasKing', 'SketchSavant', 'DoodleDynamo', 'InkWizard'
 ];
 
+const generateRandomIllustration = () => {
+  svgElements.value = []; // clear existing
+
+  const elementCount = Math.floor(Math.random() * 4) + 4; // 10–14 SVGs
+  const minDistance = 12; // minimum spacing (in % of container width/height)
+
+  const isTooClose = (x, y, elements) => {
+    return elements.some(el => {
+      const dx = el.position.x - x;
+      const dy = el.position.y - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      return distance < minDistance;
+    });
+  };
+
+  for (let i = 0; i < elementCount; i++) {
+    let position;
+    let attempts = 0;
+
+    do {
+      position = {
+        x: Math.random() * 65, // keep margin
+        y: Math.random() * 65
+      };
+      attempts++;
+      // Prevent infinite loops if too crowded
+      if (attempts > 100) break;
+    } while (isTooClose(position.x, position.y, svgElements.value));
+
+    svgElements.value.push({
+      component: svgComponents.value[Math.floor(Math.random() * svgComponents.value.length)],
+      position,
+      rotation: Math.random() * 360,
+      scale: (Math.random() * 0.7) + 0.7,
+      opacity: 1,
+      size: sizes.value[Math.floor(Math.random() * sizes.value.length)],
+      color: colors.value[Math.floor(Math.random() * colors.value.length)],
+      zIndex: 10 + Math.floor(Math.random() * 10)
+    });
+  }
+};
+
+
+onMounted(() => {
+  setInterval(() => {
+    generateRandomIllustration()
+  }, 3000);
+})
 const generateRandomRoom = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
