@@ -2,7 +2,7 @@
 
 A real-time multiplayer drawing and guessing game built with Spring Boot backend and Vue.js frontend. Players take turns drawing words while others guess in real-time.
 
-## 🎮 Features
+## Features
 
 - **Real-time Drawing**: Live canvas drawing with WebSocket communication
 - **Multiplayer Gameplay**: Support for multiple players in game rooms
@@ -13,7 +13,7 @@ A real-time multiplayer drawing and guessing game built with Spring Boot backend
 - **Timer System**: Configurable round timers with automatic round ending
 - **Game State Management**: Persistent game rooms and player management
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (Spring Boot)
 - **WebSocket Communication**: Real-time bidirectional communication
@@ -29,7 +29,7 @@ A real-time multiplayer drawing and guessing game built with Spring Boot backend
 - **Responsive UI**: Modern, mobile-friendly interface
 - **Game Controls**: Intuitive game management interface
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Backend
 - **Spring Boot** - Application framework
@@ -45,7 +45,7 @@ A real-time multiplayer drawing and guessing game built with Spring Boot backend
 - **CSS3** - Styling and animations
 - **JavaScript** - Client-side logic
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Java 11 or higher
@@ -140,7 +140,7 @@ The frontend will start on `http://localhost:3000`
 - **Backend API**: `http://localhost:8080`
 - **WebSocket**: `ws://localhost:8080/ws`
 
-## 🎯 Game Flow
+##  Game Flow
 
 1. **Room Creation**: Players join or create game rooms
 2. **Player Joining**: Minimum 2 players required to start
@@ -233,7 +233,7 @@ const GAME_CONFIG = {
 - Scheduled task management
 - Timer synchronization
 
-## 📊 Scoring System
+## Scoring System
 
 - **Correct Guess**: 10 points
 - **Drawer Bonus**: 5 points (when someone guesses correctly)
