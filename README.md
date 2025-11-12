@@ -52,33 +52,70 @@ A real-time multiplayer drawing and guessing game built with Spring Boot backend
 - Node.js 14 or higher
 - Maven 3.6 or higher
 - npm or yarn
+- Docker and Docker Compose (optional, for containerized setup)
 
-### Backend Setup
+### Quick Start (Both Backend & Frontend)
+
+**Option 1: Using Docker Compose (Recommended)**
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd scribbly
+
+# Navigate to backend directory where docker-compose.yml is located
+cd backend/game
+
+# Start both services
+docker-compose up -d
+
+# Backend will be available at http://localhost:8080
+# Frontend will be available at http://localhost:3000
+```
+**Option 2: Running Locally in Separate Terminals**
+
+Terminal 1 - Backend:
+```bash
+cd backend/game
+.\mvnw clean install
+.\mvnw spring-boot:run
+```
+
+Terminal 2 - Frontend:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Then access the application at `http://localhost:3000`
+
+### Backend Setup (Detailed)
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd scribb-game
+   cd scribbly
    ```
 
 2. **Navigate to backend directory**
    ```bash
-   cd backend
+   cd backend/game
    ```
 
-3. **Install dependencies**
+3. **Install dependencies and build**
    ```bash
-   mvn clean install
+   .\mvnw clean install
    ```
 
 4. **Run the application**
    ```bash
-   mvn spring-boot:run
+   .\mvnw spring-boot:run
    ```
 
 The backend will start on `http://localhost:8080`
 
-### Frontend Setup
+### Frontend Setup (Detailed)
 
 1. **Navigate to frontend directory**
    ```bash
@@ -88,18 +125,20 @@ The backend will start on `http://localhost:8080`
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
 3. **Run the development server**
    ```bash
-   npm run serve
-   # or
-   yarn serve
+   npm run dev
    ```
 
 The frontend will start on `http://localhost:3000`
+
+### Accessing the Application
+
+- **Frontend**: Open your browser and navigate to `http://localhost:3000`
+- **Backend API**: `http://localhost:8080`
+- **WebSocket**: `ws://localhost:8080/ws`
 
 ## 🎯 Game Flow
 
