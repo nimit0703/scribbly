@@ -21,7 +21,7 @@ RUN groupadd -r spring && useradd -r -g spring spring
 # USER spring
 
 # Expose port
-EXPOSE 8080
+EXPOSE 8080 8443
 
 # Health check (using the installed curl)
 # HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

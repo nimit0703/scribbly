@@ -6,21 +6,26 @@ let connected = false;
 let connectingPromise = null;
 
 export function connectWebSocket(onConnectCallback) {
-  // If already connected, just call the callback
   if (connected && client) {
     onConnectCallback();
     return Promise.resolve();
   }
 
-  // If connection is in progress, return the existing promise
   if (connectingPromise) {
     return connectingPromise;
   }
 
-  // Create new connection
+  // Detect protocol and set the correct port dynamically
+  const isHttps = window.location.protocol === 'https:';
+  const port = isHttps ? 8443 : 8080;
+  const protocol = isHttps ? 'https' : 'http';
+  const socketUrl = `${protocol}://localhost:${port}/ws`;
+
+  console.log(`Connecting to WebSocket via ${socketUrl}`);
+
   connectingPromise = new Promise((resolve, reject) => {
-    const socket = new SockJS('http://localhost:8080/ws');
-    
+    const socket = new SockJS(socketUrl);
+
     client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
@@ -38,9 +43,9 @@ export function connectWebSocket(onConnectCallback) {
         connectingPromise = null;
         reject(new Error('STOMP connection failed'));
       },
-      debug: () => {} // optional logging
+      debug: () => {}, // optional logging
     });
-    
+
     client.activate();
   });
 
@@ -61,3 +66,5 @@ export function disconnect() {
     connected = false;
   }
 }
+
+// export default StompClient;
