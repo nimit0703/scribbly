@@ -1,1 +1,124 @@
-@import "tailwindcss";
+/* Scribbly: a sheet of graph paper, cut-out cards, ballpoint ink and a highlighter. */
+:root {
+  --paper: #f4f7fd;
+  --grid: #d9e3f5;
+  --card: #ffffff;
+  --ink: #1e2a4f;
+  --ink-soft: #56628a;
+  --blue: #2f5bff;
+  --blue-deep: #1f43d6;
+  --highlight: #ffe14d;
+  --go: #18a058;
+  --go-wash: #dcf5e6;
+  --stop: #e5484d;
+  --close: #c77800;
+
+  --font-hand: 'Gochi Hand', 'Comic Sans MS', cursive;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+
+  /* Uneven radii read as a hand-drawn outline. Bigger pieces get a lazier wobble. */
+  --wobble: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --wobble-sm: 12px 4px 14px 5px / 5px 13px 4px 12px;
+  --shadow: 4px 5px 0 var(--ink);
+  --shadow-sm: 2px 3px 0 var(--ink);
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font: 400 1rem/1.45 var(--font-body);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--font-hand); font-weight: 400; line-height: 1.05; letter-spacing: -0.01em; margin: 0; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ---- paper card */
+.card {
+  background: var(--card);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--wobble-sm);
+  box-shadow: var(--shadow);
+}
+
+/* ---- buttons: press feedback on pointer-down, not on release */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: 44px;
+  padding: 0.5em 1.1em;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--wobble-sm);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-hand);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 90ms ease-out, box-shadow 90ms ease-out, background-color 120ms;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn:hover { background: #f0f4ff; }
+.btn:active { transform: translate(2px, 3px); box-shadow: 0 0 0 var(--ink); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: var(--shadow-sm); }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: var(--blue-deep); }
+.btn-go { background: var(--go); color: #fff; }
+.btn-go:hover { background: #12864a; }
+.btn-big { font-size: 1.7rem; min-height: 56px; padding: 0.4em 1.2em; }
+
+.icon-btn {
+  width: 40px; height: 40px; min-height: 40px; padding: 0;
+  font-size: 1.1rem;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.field {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55em 0.8em;
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--wobble-sm);
+  font-size: 1.05rem;
+}
+.field::placeholder { color: #8e98b6; }
+.field:focus-visible { outline-offset: 1px; }
+
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Self-drawing ink lines (doodles). --len should be at least the path length. */
+.draw-on {
+  stroke-dasharray: var(--len, 400);
+  stroke-dashoffset: var(--len, 400);
+  animation: draw-on var(--dur, 0.9s) cubic-bezier(.45,.05,.35,1) var(--delay, 0s) forwards;
+}
+@keyframes draw-on { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+  .draw-on { animation: none; stroke-dashoffset: 0; }
+}

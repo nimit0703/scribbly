@@ -1,63 +1,41 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
-let client;
-let connected = false;
-let connectingPromise = null;
+// In dev, Vite proxies /ws to Spring Boot. Point VITE_WS_URL at the server when hosting separately.
+const WS_URL = import.meta.env.VITE_WS_URL || '/ws';
 
-export function connectWebSocket(onConnectCallback) {
-  // If already connected, just call the callback
-  if (connected && client) {
-    onConnectCallback();
-    return Promise.resolve();
-  }
+let client = null;
+let ready = null;
 
-  // If connection is in progress, return the existing promise
-  if (connectingPromise) {
-    return connectingPromise;
-  }
-
-  // Create new connection
-  connectingPromise = new Promise((resolve, reject) => {
-    const socket = new SockJS('http://localhost:8080/ws');
-    
+/**
+ * Opens (once) the STOMP connection. Resolves with the client.
+ * No auto-reconnect: the server identifies players by connection, so a new connection is a new player.
+ * onClose fires when an established connection drops.
+ */
+export function connect(onClose) {
+  if (ready) return ready;
+  ready = new Promise((resolve, reject) => {
+    let opened = false;
     client = new Client({
-      webSocketFactory: () => socket,
-      reconnectDelay: 5000,
+      webSocketFactory: () => new SockJS(WS_URL),
+      reconnectDelay: 0,
       onConnect: () => {
-        connected = true;
-        connectingPromise = null;
-        onConnectCallback();
-        resolve();
+        opened = true;
+        resolve(client);
       },
-      onDisconnect: () => {
-        connected = false;
+      onStompError: (frame) => reject(new Error(frame.headers.message || 'Connection error')),
+      onWebSocketClose: () => {
+        ready = null;
+        if (opened) onClose?.();
+        else reject(new Error("Can't reach the game server. Is it running?"));
       },
-      onStompError: (frame) => {
-        console.error('STOMP error:', frame);
-        connectingPromise = null;
-        reject(new Error('STOMP connection failed'));
-      },
-      debug: () => {} // optional logging
     });
-    
     client.activate();
   });
-
-  return connectingPromise;
-}
-
-export function getStompClient() {
-  return client;
-}
-
-export function isConnected() {
-  return connected;
+  return ready;
 }
 
 export function disconnect() {
-  if (client) {
-    client.deactivate();
-    connected = false;
-  }
+  client?.deactivate();
+  ready = null;
 }

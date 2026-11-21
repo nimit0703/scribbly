@@ -1,13 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import JoinRoom from './components/JoinRoom.vue';
-import GameRoom from './components/GameRoom.vue';
+import HomeView from './views/HomeView.vue';
+import PlayView from './views/PlayView.vue';
+import { store } from './game/store.js';
 
-const routes = [
-  { path: '/', name: 'JoinRoom', component: JoinRoom },
-  { path: '/game', name: 'GameRoom', component: GameRoom },
-];
-
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes: [
+    { path: '/', name: 'home', component: HomeView },
+    // Only reachable after joining; a refresh drops the connection, so send people back home.
+    { path: '/play', name: 'play', component: PlayView, beforeEnter: () => (store.room ? true : { name: 'home' }) },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
+  ],
 });
+
+export default router;
