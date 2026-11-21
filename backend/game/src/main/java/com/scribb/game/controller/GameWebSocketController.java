@@ -1,173 +1,109 @@
 package com.scribb.game.controller;
 
-import java.util.List;
-
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import com.scribb.game.model.*;
-import com.scribb.game.service.*;
+import com.scribb.game.model.Requests;
+import com.scribb.game.model.RoomSettings;
+import com.scribb.game.service.GameEngine;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+/**
+ * Thin STOMP adapter: maps /app/** destinations to GameEngine calls.
+ * The caller is always identified by its STOMP session id, never by anything in the payload.
+ * See documents/PROTOCOL.md for the full message list.
+ */
 @Controller
 @RequiredArgsConstructor
 public class GameWebSocketController {
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final RoomManager roomManager;
-    private final GameRoundService gameRoundService;
-    private final GuessProcessingService guessProcessingService;
-    private final TimerService timerService;
+    private static final String SESSION = "simpSessionId";
 
-    @MessageMapping("/join")
-    public void joinRoom(@Payload JoinRequest request) {
-        try {
-            log.info("Player {} joining room {}", request.getUsername(), request.getRoomId());
-            
-            GameRoom room = roomManager.createOrJoinRoom(request.getRoomId(), request.getUsername());
+    private final GameEngine engine;
 
-            // Notify all clients about players
-            messagingTemplate.convertAndSend("/topic/players/" + request.getRoomId(), room.getPlayers());
+    @MessageMapping("/room/quick")
+    public void quickPlay(@Header(SESSION) String session, @Payload Requests.Join req) {
+        engine.quickPlay(session, req);
+    }
 
-            // Auto-start when minimum players are in room
-            if (gameRoundService.shouldStartGame(room)) {
-                gameRoundService.startGame(request.getRoomId());
-            }
-        } catch (Exception e) {
-            log.error("Error joining room", e);
-            sendError(request.getRoomId(), "Failed to join room: " + e.getMessage());
-        }
+    @MessageMapping("/room/create")
+    public void create(@Header(SESSION) String session, @Payload Requests.Join req) {
+        engine.createPrivate(session, req);
+    }
+
+    @MessageMapping("/room/join")
+    public void join(@Header(SESSION) String session, @Payload Requests.Join req) {
+        engine.joinByCode(session, req);
+    }
+
+    @MessageMapping("/room/leave")
+    public void leave(@Header(SESSION) String session) {
+        engine.leave(session);
+    }
+
+    @MessageMapping("/room/sync")
+    public void sync(@Header(SESSION) String session) {
+        engine.sync(session);
+    }
+
+    @MessageMapping("/room/settings")
+    public void settings(@Header(SESSION) String session, @Payload RoomSettings settings) {
+        engine.updateSettings(session, settings);
+    }
+
+    @MessageMapping("/game/start")
+    public void start(@Header(SESSION) String session) {
+        engine.start(session);
+    }
+
+    @MessageMapping("/game/choose")
+    public void choose(@Header(SESSION) String session, @Payload Requests.ChooseWord req) {
+        engine.chooseWord(session, req.index());
     }
 
     @MessageMapping("/draw")
-    public void receiveDraw(@Payload DrawMessage message) {
-        messagingTemplate.convertAndSend("/topic/draw/" + message.getRoomId(), message);
+    public void draw(@Header(SESSION) String session, @Payload Requests.Draw req) {
+        engine.draw(session, req.ops());
     }
 
-    @MessageMapping("/draw-start")
-    public void drawStart(@Payload DrawStartMessage message) {
-        messagingTemplate.convertAndSend("/topic/draw-start/" + message.getRoomId(), message);
+    @MessageMapping("/draw/clear")
+    public void clear(@Header(SESSION) String session) {
+        engine.clear(session);
     }
 
-    @MessageMapping("/draw-end")
-    public void drawEnd(@Payload DrawEndMessage message) {
-        messagingTemplate.convertAndSend("/topic/draw-end/" + message.getRoomId(), message);
-    }
-
-    @MessageMapping("/clear")
-    public void clearCanvas(@Payload ClearMessage message) {
-        messagingTemplate.convertAndSend("/topic/clear/" + message.getRoomId(), message);
+    @MessageMapping("/draw/undo")
+    public void undo(@Header(SESSION) String session) {
+        engine.undo(session);
     }
 
     @MessageMapping("/chat")
-    public void receiveChat(@Payload ChatMessage message) {
-        try {
-            GuessResult result = guessProcessingService.processGuess(
-                message.getRoomId(), 
-                message.getUsername(), 
-                message.getContent()
-            );
-            
-            log.debug("Guess result for {}: {}", message.getUsername(), result.getMessage());
-            
-            if (result.isCorrect()) {
-                // Send system message about correct guess
-                messagingTemplate.convertAndSend(
-                    "/topic/system/" + message.getRoomId(),
-                    message.getUsername() + " guessed the word! (+" + result.getPointsAwarded() + " points)"
-                );
-
-                // Update player list (scores changed)
-                GameRoom room = roomManager.getRoom(message.getRoomId());
-                messagingTemplate.convertAndSend("/topic/players/" + message.getRoomId(), room.getPlayers());
-
-                // Check if all players guessed
-                if (result.isRoundComplete()) {
-                    gameRoundService.endRound(message.getRoomId());
-                }
-            } else {
-                // Regular chat message
-                messagingTemplate.convertAndSend("/topic/chat/" + message.getRoomId(), message);
-            }
-        } catch (Exception e) {
-            log.error("Error processing chat", e);
-        }
+    public void chat(@Header(SESSION) String session, @Payload Requests.Chat req) {
+        engine.chat(session, req.text());
     }
 
-    @MessageMapping("/word-select")
-    public void wordSelect(@Payload WordSelection selection) {
-        try {
-            log.info("Word selected for room {}: {}", selection.getRoomId(), selection.getWord());
-            gameRoundService.startRound(
-                selection.getRoomId(), 
-                selection.getDrawer(), 
-                selection.getWord()
-            );
-        } catch (Exception e) {
-            log.error("Error selecting word", e);
-            sendError(selection.getRoomId(), "Failed to start round: " + e.getMessage());
-        }
+    @MessageMapping("/rate")
+    public void rate(@Header(SESSION) String session, @Payload Requests.Rate req) {
+        engine.rate(session, req.like());
     }
 
-    @MessageMapping("/start-round")
-    public void startRound(@Payload StartRoundRequest req) {
-        try {
-            gameRoundService.startGame(req.getRoomId());
-        } catch (Exception e) {
-            log.error("Error starting round", e);
-            sendError(req.getRoomId(), "Failed to start round: " + e.getMessage());
-        }
+    @MessageMapping("/kick/vote")
+    public void voteKick(@Header(SESSION) String session, @Payload Requests.Target req) {
+        engine.voteKick(session, req.playerId());
     }
 
-    @MessageMapping("/end-round")
-    public void endRound(@Payload RoundEndRequest req) {
-        try {
-            gameRoundService.endRound(req.getRoomId());
-        } catch (Exception e) {
-            log.error("Error ending round", e);
-            sendError(req.getRoomId(), "Failed to end round: " + e.getMessage());
-        }
+    @MessageMapping("/kick")
+    public void kick(@Header(SESSION) String session, @Payload Requests.Target req) {
+        engine.ownerKick(session, req.playerId());
     }
 
-    @MessageMapping("/timer-ended")
-    public void handleTimerEnded(@Payload TimerEndedMessage message) {
-        try {
-            log.info("Timer ended for room: {}", message.getRoomId());
-            gameRoundService.endRound(message.getRoomId());
-        } catch (Exception e) {
-            log.error("Error handling timer end", e);
-        }
-    }
-
-    @MessageMapping("/hint")
-    public void sendHint(@Payload ChatMessage message) {
-        messagingTemplate.convertAndSend("/topic/hint/" + message.getRoomId(), message.getContent());
-    }
-
-    @MessageMapping("/leave")
-    public void leaveRoom(@Payload JoinRequest request) {
-        try {
-            log.info("Player {} leaving room {}", request.getUsername(), request.getRoomId());
-            roomManager.removePlayer(request.getRoomId(), request.getUsername());
-            
-            GameRoom room = roomManager.getRoomOptional(request.getRoomId()).orElse(null);
-            if (room != null) {
-                messagingTemplate.convertAndSend("/topic/players/" + request.getRoomId(), room.getPlayers());
-            }
-        } catch (Exception e) {
-            log.error("Error leaving room", e);
-        }
-    }
-
-    private void sendError(String roomId, String error) {
-        messagingTemplate.convertAndSend(
-            "/topic/error/" + roomId,
-            java.util.Map.of("error", error, "timestamp", System.currentTimeMillis())
-        );
+    /** Closing the tab or losing the connection counts as leaving. */
+    @EventListener
+    public void onDisconnect(SessionDisconnectEvent event) {
+        engine.leave(event.getSessionId());
     }
 }

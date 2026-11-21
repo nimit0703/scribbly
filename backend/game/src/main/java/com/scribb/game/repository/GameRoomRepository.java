@@ -1,4 +1,4 @@
-// GameRoomRepository.java (Interface)
+
 package com.scribb.game.repository;
 
 import java.util.Collection;

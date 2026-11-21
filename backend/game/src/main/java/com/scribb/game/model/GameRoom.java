@@ -1,88 +1,80 @@
 package com.scribb.game.model;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+/**
+ * Mutable state of one room. Every read-modify-write must hold the room's monitor
+ * (synchronized (room)); GameEngine does that for all entry points.
+ */
+@Getter
+@Setter
 public class GameRoom {
-    private String roomId;
-    private List<Player> players = new CopyOnWriteArrayList<>();
-    private String currentWord;
-    private String currentDrawer;
-    private int roundNumber = 0;
-    private int lastDrawerIndex = -1;
-    private long roundStartTime;
-    private long timerStartTime;
-    private boolean timerActive = false;
-    private int roundDurationMillis = 60000;
-    private Set<String> correctGuessers = new HashSet<>();
-    private boolean gameStarted = false;
-    private boolean gameOver = false;
-    private long lastActivityTime;
+    private final String code;
+    private final boolean isPrivate;
+    private RoomSettings settings;
+    private String ownerId;
+    private boolean closed;
 
-    public GameRoom(String roomId) {
-        this.roomId = roomId;
-        this.lastActivityTime = System.currentTimeMillis();
+    /** CopyOnWrite so matchmaking can read the size without taking the lock. */
+    private final List<Player> players = new CopyOnWriteArrayList<>();
+
+    private Phase phase = Phase.LOBBY;
+    private int round;
+    /** Players still to draw in this round, in order. */
+    private Deque<String> drawQueue = new ArrayDeque<>();
+    private String drawerId;
+    private List<String> wordChoices = List.of();
+    private String word;
+    private final Set<Integer> revealed = new HashSet<>();
+    /** Epoch millis at which the next hint letters are revealed. */
+    private final Deque<Long> hintTimes = new ArrayDeque<>();
+    /** Epoch millis when the current timed phase ends. */
+    private long deadline;
+    private int guessedCount;
+    private final Map<String, Integer> gains = new LinkedHashMap<>();
+    private final List<DrawOp> ops = new ArrayList<>();
+    private final Map<String, Set<String>> kickVotes = new HashMap<>();
+    private final Set<String> raters = new HashSet<>();
+    private TurnResult turnResult;
+
+    public GameRoom(String code, boolean isPrivate, RoomSettings settings) {
+        this.code = code;
+        this.isPrivate = isPrivate;
+        this.settings = settings;
     }
 
-    public Optional<Player> getPlayer(String username) {
-        return players.stream()
-            .filter(p -> p.getUsername().equals(username))
-            .findFirst();
+    public Player player(String id) {
+        for (Player p : players) if (p.getId().equals(id)) return p;
+        return null;
     }
 
-    public void addPlayer(Player player) {
-        if (getPlayer(player.getUsername()).isEmpty()) {
-            players.add(player);
-            this.lastActivityTime = System.currentTimeMillis();
-        }
+    public Player drawer() {
+        return drawerId == null ? null : player(drawerId);
     }
 
-    public void removePlayer(String username) {
-        players.removeIf(p -> p.getUsername().equals(username));
-        this.lastActivityTime = System.currentTimeMillis();
-    }
-
-    public void resetForNextRound() {
-        this.currentWord = null;
-        this.correctGuessers.clear();
-        
-        // Reset player guess status
-        players.forEach(p -> p.setHasGuessedCorrectly(false));
-        
-        // Increment round number
-        this.roundNumber++;
-        
-        // Check if game is over (you can customize this based on total rounds)
-        if (this.roundNumber > 3) { // Default 3 rounds
-            this.gameOver = true;
-        }
-        
-        this.lastActivityTime = System.currentTimeMillis();
-    }
-
-    public void startTimer() {
-        this.timerActive = true;
-        this.timerStartTime = System.currentTimeMillis();
-        this.lastActivityTime = System.currentTimeMillis();
-    }
-
-    public void stopTimer() {
-        this.timerActive = false;
-        this.lastActivityTime = System.currentTimeMillis();
-    }
-
-    public int getRemainingTimeSeconds() {
-        if (!timerActive) {
-            return 0;
-        }
-        long elapsed = System.currentTimeMillis() - timerStartTime;
-        long remaining = roundDurationMillis - elapsed;
-        return (int) Math.max(0, remaining / 1000);
+    /** Clears everything that belongs to a single turn. */
+    public void resetTurn() {
+        word = null;
+        wordChoices = List.of();
+        revealed.clear();
+        hintTimes.clear();
+        guessedCount = 0;
+        gains.clear();
+        ops.clear();
+        raters.clear();
+        turnResult = null;
+        players.forEach(p -> p.setGuessed(false));
     }
 }

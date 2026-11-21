@@ -1,229 +1,125 @@
-# Scribb - Real-time Drawing Game
+# Scribbly
 
-A real-time multiplayer drawing and guessing game built with Spring Boot backend and Vue.js frontend. Players take turns drawing words while others guess in real-time.
+**Draw it badly. Guess it fast.** A free multiplayer drawing and guessing game for 2 to 12 friends, right in the browser.
 
-## 🎮 Features
+![The home page](documents/screenshots/01-home.png)
 
-- **Real-time Drawing**: Live canvas drawing with WebSocket communication
-- **Multiplayer Gameplay**: Support for multiple players in game rooms
-- **Turn-based System**: Rotating drawer selection with automatic round management
-- **Word Selection**: Random word generation with multiple choice options
-- **Scoring System**: Points awarded for correct guesses and successful drawings
-- **Chat Integration**: Real-time chat with automatic word detection
-- **Timer System**: Configurable round timers with automatic round ending
-- **Game State Management**: Persistent game rooms and player management
+## How to play
 
-## 🏗️ Architecture
+1. **Pick a word.** When it's your turn, you get a few words to choose from. Pick one within 15 seconds.
+2. **Draw it.** No letters, no numbers, just drawing. Everyone else sees your strokes as you make them.
+3. **Guess fast.** When someone else is drawing, type your guesses in the chat. The faster you get it, the more points you score.
 
-### Backend (Spring Boot)
-- **WebSocket Communication**: Real-time bidirectional communication
-- **Room Management**: Dynamic room creation and player management
-- **Game Logic**: Turn rotation, scoring, and round management
-- **Timer Service**: Automated round timing and scheduling
-- **Word Service**: Random word generation and validation
+Everyone draws once per round. After the last round, the player with the most points wins.
 
-### Frontend (Vue.js)
-- **Canvas Drawing**: Interactive drawing interface
-- **Real-time Updates**: Live game state synchronization
-- **Chat System**: Integrated chat with guess detection
-- **Responsive UI**: Modern, mobile-friendly interface
-- **Game Controls**: Intuitive game management interface
+![Guessing while someone draws](documents/screenshots/05-guessing.png)
 
-## 🛠️ Technology Stack
+## Start a game
 
-### Backend
-- **Spring Boot** - Application framework
-- **Spring WebSocket** - Real-time communication
-- **Spring Messaging** - WebSocket message handling
-- **Lombok** - Code generation
-- **Java** - Programming language
+- **Play!** puts you in a public room with other players. The game starts as soon as there are two of you.
+- **Create private room** gives you a room of your own. Choose the settings, press **Copy invite link**, send it to your friends, then press **Start game** once they're in.
+- **Have a code?** Type a friend's 6-letter room code and press **Join**. Opening an invite link works too.
 
-### Frontend
-- **Vue.js** - Frontend framework
-- **WebSocket API** - Real-time communication
-- **HTML5 Canvas** - Drawing functionality
-- **CSS3** - Styling and animations
-- **JavaScript** - Client-side logic
+Before you play, type a name and give your character a face with the arrows (or roll the dice for a random one).
 
-## 🚀 Getting Started
+![Private room lobby](documents/screenshots/02-lobby.png)
 
-### Prerequisites
-- Java 11 or higher
-- Node.js 14 or higher
-- Maven 3.6 or higher
-- npm or yarn
+### Private room settings
 
-### Backend Setup
+| Setting | What it does |
+|---|---|
+| Players | How many people can join (2–12) |
+| Rounds | How many times everyone draws (1–10) |
+| Draw time | Seconds per drawing (30–240) |
+| Word choices | How many words the drawer picks from (1–5) |
+| Hints | How many letters get revealed while drawing (never more than half the word) |
+| Custom words | Your own words, separated by commas, mixed in with the built-in ones |
+| Use custom words only | Play only with your words |
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd scribb-game
-   ```
+## While you draw
 
-2. **Navigate to backend directory**
-   ```bash
-   cd backend
-   ```
+![Drawing tools](documents/screenshots/06-drawing.png)
 
-3. **Install dependencies**
-   ```bash
-   mvn clean install
-   ```
+| Tool | Shortcut | |
+|---|---|---|
+| Brush | `B` | Pick a colour and one of four sizes |
+| Fill | `F` | Fill an enclosed area with colour |
+| Eraser | `E` | Paint white |
+| Undo | `Ctrl` + `Z` | Removes your last stroke |
+| Clear | | Wipes the board |
 
-4. **Run the application**
-   ```bash
-   mvn spring-boot:run
-   ```
+You can chat while you draw, but only players who already guessed will see it, and you can't type the word.
 
-The backend will start on `http://localhost:8080`
+## While you guess
 
-### Frontend Setup
+- Your word appears as blanks at the top, like `_ _ _ _ _`. Letters fill in as hints over time.
+- If your guess is one letter off, you'll see **"… is close!"**. Only you see that.
+- Once you've guessed, your chat only goes to the drawer and others who guessed, so you can't spoil it.
+- Like or dislike the drawing with the thumbs at the top-right of the board.
 
-1. **Navigate to frontend directory**
-   ```bash
-   cd frontend
-   ```
+## Points
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
+- **Guessers:** up to 500 points. You get more the sooner you guess, plus a bonus for being 1st, 2nd or 3rd.
+- **Drawer:** half of every correct guesser's points. The more people who get your drawing, the more you score.
 
-3. **Run the development server**
-   ```bash
-   npm run serve
-   # or
-   yarn serve
-   ```
+After each turn you see the word and everyone's points. After the last round there's a podium.
 
-The frontend will start on `http://localhost:3000`
+![Podium](documents/screenshots/08-podium.png)
 
-## 🎯 Game Flow
+## Being a good sport
 
-1. **Room Creation**: Players join or create game rooms
-2. **Player Joining**: Minimum 2 players required to start
-3. **Word Selection**: Current drawer selects from 3 random words
-4. **Drawing Phase**: Drawer creates artwork while others guess
-5. **Guessing Phase**: Players submit guesses via chat
-6. **Scoring**: Points awarded for correct guesses
-7. **Round Rotation**: Next player becomes drawer
-8. **Game End**: Game concludes after all players have drawn
+- **Vote kick:** hover over a player in the list and press **×** to vote them out. It takes at least two votes.
+- **Room owners** (the crown) can kick directly in private rooms.
+- **Sound:** the speaker button in the top bar turns sound on or off.
+- **Leave:** the button in the top bar takes you back to the home page.
 
-## 🔧 WebSocket Endpoints
-
-### Client → Server Messages
-- `/join` - Join a game room
-- `/draw` - Send drawing data
-- `/draw-start` - Start drawing stroke
-- `/draw-end` - End drawing stroke
-- `/clear` - Clear canvas
-- `/chat` - Send chat message/guess
-- `/word-select` - Select word to draw
-- `/start-round` - Start new round
-- `/end-round` - End current round
-- `/timer-ended` - Timer expired
-
-### Server → Client Messages
-- `/topic/players/{roomId}` - Player list updates
-- `/topic/draw/{roomId}` - Drawing data
-- `/topic/draw-start/{roomId}` - Drawing start events
-- `/topic/draw-end/{roomId}` - Drawing end events
-- `/topic/clear/{roomId}` - Canvas clear events
-- `/topic/chat/{roomId}` - Chat messages
-- `/topic/system/{roomId}` - System messages
-- `/topic/word-options/{username}` - Word choices for drawer
-- `/topic/hint/{roomId}` - Masked word hints
-- `/topic/drawer/{roomId}` - Current drawer updates
-- `/topic/round/{roomId}` - Round number updates
-
-## ⚙️ Configuration
-
-### Backend Configuration (Not required at all)
-```properties
-# WebSocket Configuration
-server.port=8080
-spring.websocket.stomp.heartbeat.send-interval=10000
-spring.websocket.stomp.heartbeat.receive-interval=10000
-
-# Game Configuration
-game.round.duration=90000
-game.min.players=2
-game.max.players=8
-game.points.correct.guess=10
-game.points.drawer.bonus=5
-```
-
-### Frontend Configuration
-```javascript
-// WebSocket connection
-const WEBSOCKET_URL = 'ws://localhost:8080/ws'
-
-// Game settings
-const GAME_CONFIG = {
-  roundDuration: 90000,
-  canvasWidth: 800,
-  canvasHeight: 600,
-  brushSizes: [2, 5, 10, 15],
-  colors: ['#000', '#ff0000', '#00ff00', '#0000ff']
-}
-```
-
-## 🎨 Key Components
-
-### GameWebSocketController
-- Handles all WebSocket message routing
-- Manages game state transitions
-- Coordinates between services
-
-### RoomManager
-- Room creation and management
-- Player joining and leaving
-- Word selection and validation
-- Score calculation
-
-### GameRoundService
-- Round lifecycle management
-- Timer integration
-- Game state persistence
-
-### TimerService
-- Automatic round timing
-- Scheduled task management
-- Timer synchronization
-
-## 📊 Scoring System
-
-- **Correct Guess**: 10 points
-- **Drawer Bonus**: 5 points (when someone guesses correctly)
-- **Speed Bonus**: Additional points for quick guesses
-- **Streak Bonus**: Bonus points for consecutive correct guesses
-
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Authors
-
-- **Nimit** - *Initial work* - [nimit0703](https://github.com/nimit0703)
-
-## 🙏 Acknowledgments
-
-- Spring Boot team for the excellent framework
-- Vue.js community for the reactive frontend framework
-- Contributors and testers
+Scribbly works on phones too: the board comes first, then the tools, chat and players.
 
 ---
 
-**Have fun drawing and guessing! 🎨✨**
+## Run it yourself
+
+You need **Java 17+** and **Node.js 20+**.
+
+```bash
+# 1. Start the game server (http://localhost:8080)
+cd backend/game
+./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
+
+# 2. In a second terminal, start the website
+cd frontend
+npm install
+npm run dev                     # open http://localhost:5173
+```
+
+To play with friends on your network, run `npm run dev -- --host` and share the address it prints.
+
+### Configuration
+
+Server settings live in `backend/game/src/main/resources/application.properties`:
+
+| Property | Default | |
+|---|---|---|
+| `game.choose-seconds` | 15 | Time to pick a word |
+| `game.turn-end-seconds` | 6 | How long the word is shown after a turn |
+| `game.game-over-seconds` | 10 | How long the podium is shown |
+| `game.public-max-players` | 8 | Seats in public rooms |
+| `game.allowed-origins` | `*` | Websites allowed to connect. Set this to your domain in production. |
+
+The built-in words are in `backend/game/src/main/resources/static/words.txt`, one per line.
+
+If the website and server run on different hosts, build the site with `VITE_WS_URL=https://your-server/ws npm run build`.
+
+### Tests
+
+```bash
+cd backend/game && ./mvnw test   # 35 backend tests, including a real WebSocket game
+cd frontend && npm test          # 12 frontend tests
+cd frontend && npm run e2e       # plays full games in Chrome (both servers must be running)
+```
+
+### For developers
+
+See [documents/](documents/README.md) for the architecture, the WebSocket protocol, the exact game rules, testing and design notes.
+
+Built with Spring Boot 3.5 (Java 17) and Vue 3 + Vite.

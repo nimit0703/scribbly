@@ -1,4 +1,4 @@
-// InMemoryGameRoomRepository.java (Implementation)
+
 package com.scribb.game.repository;
 
 import java.util.ArrayList;
@@ -23,8 +23,7 @@ public class InMemoryGameRoomRepository implements GameRoomRepository {
     
     @Override
     public GameRoom save(GameRoom room) {
-        rooms.put(room.getRoomId(), room);
-        room.setLastActivityTime(System.currentTimeMillis());
+        rooms.put(room.getCode(), room);
         return room;
     }
     

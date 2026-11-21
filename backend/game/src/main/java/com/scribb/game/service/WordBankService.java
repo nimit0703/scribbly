@@ -4,92 +4,61 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.stereotype.Service;
 
+import com.scribb.game.config.GameProperties;
+
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class WordBankService {
-    
-    private final List<String> words = new CopyOnWriteArrayList<>();
-    private volatile boolean loaded = false;
+
+    private final GameProperties props;
+    private List<String> words = List.of();
 
     @PostConstruct
     void load() {
-        if (loaded) {
-            return;
-        }
-        
-        var resource = getClass().getClassLoader().getResourceAsStream("static/words.txt");
-
-        if (resource == null) {
-            log.error("words.txt not found in resources");
-            throw new IllegalStateException("words.txt does not exist");
-        }
-        
+        var resource = getClass().getClassLoader().getResourceAsStream(props.getDictionaryFile());
+        if (resource == null) throw new IllegalStateException(props.getDictionaryFile() + " not found on classpath");
         try (var br = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
-            br.lines()
-                .map(String::trim)
-                .map(String::toLowerCase)
-                .filter(line -> !line.isBlank() && !line.startsWith("#"))
-                .filter(word -> word.length() >= 3 && word.length() <= 15)
-                .forEach(words::add);
-                
-            loaded = true;
-            log.info("✅ Loaded {} words into word bank", words.size());
-            
+            var set = new LinkedHashSet<String>();
+            br.lines().map(l -> l.trim().toLowerCase())
+                    .filter(l -> !l.isBlank() && !l.startsWith("#") && l.length() <= 30)
+                    .forEach(set::add);
+            words = List.copyOf(set);
+            log.info("Loaded {} words", words.size());
         } catch (Exception e) {
-            log.error("Failed to load words from file", e);
-            throw new RuntimeException("Failed to load words", e);
+            throw new IllegalStateException("Failed to load words", e);
         }
     }
 
-    public List<String> takeRandom(int n) {
-        if (!loaded) {
-            throw new IllegalStateException("Word bank not loaded yet");
+    /**
+     * n distinct words for the drawer to choose from.
+     * Custom words are mixed into the built-in list, or used alone when customOnly and there are enough of them.
+     */
+    public List<String> choices(int n, List<String> custom, boolean customOnly) {
+        List<String> pool;
+        if (customOnly && custom.size() >= n) {
+            pool = new ArrayList<>(custom);
+        } else {
+            var set = new LinkedHashSet<>(words);
+            set.addAll(custom);
+            pool = new ArrayList<>(set);
         }
-        
-        if (words.size() < n) {
-            throw new IllegalStateException(
-                "Not enough words in bank. Required: " + n + ", Available: " + words.size()
-            );
-        }
-        
-        // Use ThreadLocalRandom for better performance in concurrent scenarios
-        Set<String> selected = new HashSet<>();
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        
-        while (selected.size() < n) {
-            int index = random.nextInt(words.size());
-            selected.add(words.get(index));
-        }
-        
-        return new ArrayList<>(selected);
+        Collections.shuffle(pool, ThreadLocalRandom.current());
+        return List.copyOf(pool.subList(0, Math.min(n, pool.size())));
     }
-    
-    public int getWordCount() {
+
+    public int size() {
         return words.size();
-    }
-
-    public void addWord(String newWord) {
-        if (newWord != null && !newWord.isBlank()) {
-            String word = newWord.trim().toLowerCase();
-            if (!words.contains(word)) {
-                words.add(word);
-                log.info("Added new word to bank: {}", word);
-            }
-        }
-    }
-    
-    public boolean containsWord(String word) {
-        return word != null && words.contains(word.trim().toLowerCase());
     }
 }

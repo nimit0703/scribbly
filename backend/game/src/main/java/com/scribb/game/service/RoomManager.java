@@ -1,118 +1,87 @@
 package com.scribb.game.service;
 
+import java.security.SecureRandom;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
 import com.scribb.game.config.GameProperties;
-import com.scribb.game.exception.RoomNotFoundException;
 import com.scribb.game.model.GameRoom;
-import com.scribb.game.model.Player;
+import com.scribb.game.model.RoomSettings;
 import com.scribb.game.repository.GameRoomRepository;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/** Owns the set of rooms and which STOMP session plays in which room. No game rules here. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoomManager {
-    
-    private final GameRoomRepository roomRepository;
-    private final WordBankService wordBankService;
-    private final GameProperties gameProperties;
-    
-    @PostConstruct
-    public void init() {
-        log.info("===== RoomManager initialized =====");
+
+    /** No 0/O/1/I so codes are easy to read out loud. */
+    private static final String ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    public record Binding(String code, String playerId) {}
+
+    private final GameRoomRepository repository;
+    private final GameProperties props;
+    private final Map<String, Binding> sessions = new ConcurrentHashMap<>();
+
+    /** The fullest public room that still has a seat, or a new one. Synchronized so two players don't open two rooms. */
+    public synchronized GameRoom findOrCreatePublic() {
+        return repository.findAll().stream()
+                .filter(r -> !r.isPrivate() && !r.isClosed() && r.getPlayers().size() < r.getSettings().getMaxPlayers())
+                .max(Comparator.comparingInt(r -> r.getPlayers().size()))
+                .orElseGet(() -> create(false));
     }
 
-    public GameRoom createOrJoinRoom(String roomId, String username) {
-        GameRoom room = roomRepository.findById(roomId)
-            .orElseGet(() -> {
-                log.info("Creating new room: {}", roomId);
-                return new GameRoom(roomId);
-            });
-        
-        if (room.getPlayer(username).isEmpty()) {
-            room.getPlayers().add(new Player(username, 0, false));
-            log.info("Player {} joined room {}", username, roomId);
-        }
-        
-        return roomRepository.save(room);
+    public synchronized GameRoom create(boolean isPrivate) {
+        String code;
+        do {
+            code = randomCode();
+        } while (repository.existsById(code));
+        RoomSettings settings = new RoomSettings();
+        if (!isPrivate) settings.setMaxPlayers(props.getPublicMaxPlayers());
+        GameRoom room = new GameRoom(code, isPrivate, settings);
+        log.info("Created {} room {}", isPrivate ? "private" : "public", code);
+        return repository.save(room);
     }
 
-    public GameRoom getRoom(String roomId) {
-        return roomRepository.findById(roomId)
-            .orElseThrow(() -> new RoomNotFoundException(roomId));
-    }
-    
-    public Optional<GameRoom> getRoomOptional(String roomId) {
-        return roomRepository.findById(roomId);
+    public Optional<GameRoom> find(String code) {
+        return code == null ? Optional.empty() : repository.findById(code.trim().toUpperCase());
     }
 
-    public void removePlayer(String roomId, String username) {
-        Optional<GameRoom> roomOpt = roomRepository.findById(roomId);
-        if (roomOpt.isEmpty()) {
-            return;
-        }
-        
-        GameRoom room = roomOpt.get();
-        room.getPlayers().removeIf(p -> p.getUsername().equals(username));
-        
-        if (room.getPlayers().isEmpty()) {
-            log.info("Room {} is empty, deleting", roomId);
-            roomRepository.deleteById(roomId);
-        } else {
-            roomRepository.save(room);
-        }
+    public void delete(GameRoom room) {
+        room.setClosed(true);
+        repository.deleteById(room.getCode());
+        log.info("Deleted empty room {}", room.getCode());
     }
 
-    public void endRound(String roomId) {
-        GameRoom room = getRoom(roomId);
-        room.resetForNextRound();
-        roomRepository.save(room);
-        log.info("Round ended for room: {}", roomId);
+    public Collection<GameRoom> all() {
+        return repository.findAll();
     }
 
-    public Collection<GameRoom> getAllRooms() {
-        return roomRepository.findAll();
+    public void bind(String sessionId, String code, String playerId) {
+        sessions.put(sessionId, new Binding(code, playerId));
     }
 
-    public boolean isRoundOver(String roomId) {
-        Optional<GameRoom> roomOpt = roomRepository.findById(roomId);
-        if (roomOpt.isEmpty()) {
-            return true;
-        }
-        
-        GameRoom room = roomOpt.get();
-        long now = System.currentTimeMillis();
-        long roundDuration = gameProperties.getRound().getDurationSeconds() * 1000L;
-        boolean timeExpired = (now - room.getRoundStartTime()) > roundDuration;
-        
-        boolean allGuessed = room.getPlayers().stream()
-            .filter(p -> !p.getUsername().equals(room.getCurrentDrawer()))
-            .allMatch(Player::isHasGuessedCorrectly);
-
-        return timeExpired || allGuessed;
+    public Binding unbind(String sessionId) {
+        return sessionId == null ? null : sessions.remove(sessionId);
     }
 
-    public String pickNextDrawer(GameRoom room) {
-        if (room.getPlayers().isEmpty()) {
-            throw new IllegalStateException("No players in room");
-        }
-
-        int nextIndex = (room.getLastDrawerIndex() + 1) % room.getPlayers().size();
-        room.setLastDrawerIndex(nextIndex);
-
-        String drawer = room.getPlayers().get(nextIndex).getUsername();
-        log.info("Next drawer selected for room {}: {}", room.getRoomId(), drawer);
-        return drawer;
+    public Binding binding(String sessionId) {
+        return sessionId == null ? null : sessions.get(sessionId);
     }
 
-    public void updateRoom(GameRoom room) {
-        roomRepository.save(room);
+    static String randomCode() {
+        StringBuilder sb = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) sb.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
+        return sb.toString();
     }
 }
